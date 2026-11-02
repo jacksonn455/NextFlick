@@ -42,14 +42,14 @@ export default function SearchPage() {
         {movies && (
           <div className={styles['results-section']}>
             <h2 className={styles['movie-search-subtitle']}>
-              Results for "{searchQuery}" ({movies.length} movies)
+              Results for &quot;{searchQuery}&quot; ({movies.length} movies)
             </h2>
 
             {movies.length === 0 ? (
               <div className={styles['empty-state']}>
                 <h3>No movies found</h3>
                 <p>
-                  No movies found for "{searchQuery}". Try a different search
+                  No movies found for &quot;{searchQuery}&quot;. Try a different search
                   term.
                 </p>
               </div>

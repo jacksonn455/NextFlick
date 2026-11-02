@@ -1,0 +1,30 @@
+# Render Blueprint: deploys the NestJS backend from the backend/ folder.
+# Secrets marked "sync: false" are asked for in the Render dashboard on first deploy.
+services:
+  - type: web
+    name: nextflick-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api
+    autoDeploy: true
+    buildFilter:
+      paths:
+        - backend/**
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: OMDB_API_KEY
+        sync: false
+      - key: OMDB_API_URL
+        value: http://www.omdbapi.com/
+      - key: CORS_ORIGIN
+        sync: false

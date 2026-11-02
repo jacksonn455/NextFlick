@@ -9,7 +9,7 @@ interface Movie {
   imdbID: string;
   Title: string;
   Year: string;
-  Type: string;
+  Type?: string;
   Poster: string;
 }
 
@@ -89,7 +89,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
       <div className={styles['movie-info']}>
         <h3 className={styles['movie-title']}>{movie.Title}</h3>
         <p className={styles['movie-year']}>{movie.Year}</p>
-        <span className={styles['movie-type']}>{movie.Type}</span>
+        {movie.Type && <span className={styles['movie-type']}>{movie.Type}</span>}
       </div>
     </div>
   );

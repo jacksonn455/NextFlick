@@ -23,7 +23,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Path where the mobile menu was opened; the menu closes itself when the route changes
+  const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
+  const isMobileMenuOpen = mobileMenuPath === pathname;
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll effect
@@ -36,13 +38,8 @@ export default function RootLayout({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
-
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    setMobileMenuPath(isMobileMenuOpen ? null : pathname);
   };
 
   const isActivePath = (path: string) => {

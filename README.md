@@ -23,3 +23,19 @@ Detailed documentation for each part of the project is located in their respecti
 ## Notes
 
 Each module (backend and frontend) has its own README with detailed and specific instructions to facilitate project development and maintenance.
+## Deploy
+
+Requires **Node.js 22** (see `.nvmrc`). Backend and frontend live in the same repository and are deployed separately, each from its own root directory.
+
+### Backend → Render
+
+1. In Render, create a **Blueprint** from this repository (it reads [`render.yaml`](./render.yaml)), or a Web Service with Root Directory `backend`, build `npm ci && npm run build` and start `npm run start:prod`.
+2. Fill in the secret environment variables: `MONGO_URI`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `OMDB_API_KEY` and `CORS_ORIGIN` (the Vercel URL, e.g. `https://nextflick.vercel.app`).
+3. In MongoDB Atlas → Network Access, allow `0.0.0.0/0` (Render has no static outbound IP on the free plan).
+4. Health check: `GET /api` (Swagger docs).
+
+### Frontend → Vercel
+
+1. Import this repository in Vercel and set **Root Directory** to `frontend` (Next.js is detected automatically).
+2. Add the environment variable `NEXT_PUBLIC_API_URL` with the Render URL (e.g. `https://nextflick-api.onrender.com`, no trailing slash).
+3. `NEXT_PUBLIC_*` variables are embedded at build time — redeploy after changing them.

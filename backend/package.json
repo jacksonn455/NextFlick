@@ -30,7 +30,6 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
-    "@tensorflow/tfjs-node": "^4.22.0",
     "@upstash/redis": "^1.41.0",
     "amqplib": "^0.10.9",
     "cache-manager": "^7.2.4",
@@ -82,5 +81,11 @@
     ],
     "coverageDirectory": "coverage",
     "testEnvironment": "node"
+  },
+  "optionalDependencies": {
+    "@tensorflow/tfjs-node": "^4.22.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
