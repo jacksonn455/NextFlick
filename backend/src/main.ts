@@ -13,7 +13,7 @@ async function bootstrap() {
   app.enableCors();
 
   const config = new DocumentBuilder()
-    .setTitle('screen-search')
+    .setTitle('NextFlick')
     .setDescription('A REST API for searching movies and managing favorites')
     .setVersion('1.0')
     .addTag('Movies', 'Endpoints for searching movies')
@@ -22,10 +22,10 @@ async function bootstrap() {
     
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {
-    customSiteTitle: 'screen-search API Documentation',
+    customSiteTitle: 'NextFlick API Documentation',
   });
   
-  await app.listen(3000);
+  await app.listen(process.env.PORT ?? 3000);
 }
 
 bootstrap();

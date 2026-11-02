@@ -13,7 +13,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 // Note: Metadata should be moved to a separate metadata.ts file or handled differently in client components
 // export const metadata: Metadata = {
-//   title: 'Screen Search',
+//   title: 'NextFlick',
 //   description: 'Search and manage your favorite movies',
 // };
 
@@ -52,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>Screen Search</title>
+        <title>NextFlick</title>
         <meta name="description" content="Search and manage your favorite movies" />
       </head>
       <body className={inter.className}>
@@ -61,7 +61,7 @@ export default function RootLayout({
             <div className={styles['nav-container']}>
               <Link href="/" className={styles['nav-logo']}>
                 <span className={styles['nav-logo-icon']}>🎬</span>
-                Screen Search
+                NextFlick
               </Link>
               
               {/* Desktop Menu */}

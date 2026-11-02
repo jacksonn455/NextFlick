@@ -1,4 +1,4 @@
-# ScreenSearch - Frontend
+# NextFlick - Frontend
 
 A modern movie search and favorites management application, built with Next.js 14+ and React, featuring a design inspired by streaming platforms like Netflix, HBO Max, and Amazon Prime.
 

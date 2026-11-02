@@ -19,7 +19,7 @@ import { RedisModule } from './config/redis/redis.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/screen-search',
+        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/NextFlick',
       }),
     }),
     RedisModule,

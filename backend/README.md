@@ -1,6 +1,6 @@
-# ScreenSearch
+# NextFlick
 
-ScreenSearch is a robust and scalable application designed for efficient movie searching and management, leveraging modern architectural patterns and high-performance technologies. This project prioritizes maintainability, scalability, and developer experience, making it ideal for agile development teams.
+NextFlick is a robust and scalable application designed for efficient movie searching and management, leveraging modern architectural patterns and high-performance technologies. This project prioritizes maintainability, scalability, and developer experience, making it ideal for agile development teams.
 
 ## Features
 
@@ -71,7 +71,7 @@ Swagger is integrated to provide comprehensive and interactive API documentation
 
 ### Third-Party API Integration: OMDB
 
-The ScreenSearch application integrates with the **OMDB API** (Open Movie Database) to fetch comprehensive movie information. This integration is central to the application's functionality, allowing users to search for movies and retrieve details such as titles, years, genres, and more.
+The NextFlick application integrates with the **OMDB API** (Open Movie Database) to fetch comprehensive movie information. This integration is central to the application's functionality, allowing users to search for movies and retrieve details such as titles, years, genres, and more.
 
 -   **Purpose**: To provide a rich and up-to-date database of movie information.
 -   **Efficiency**: Coupled with the Redis caching strategy, API calls are optimized to minimize latency and reduce external requests.

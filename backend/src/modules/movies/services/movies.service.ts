@@ -48,7 +48,7 @@ export class MoviesService {
         response.data.Error &&
         response.data.Error.toLowerCase().includes('not found')
       ) {
-        await this.cacheManager.set(cacheKey, [], 60 * 30);
+        await this.cacheManager.set(cacheKey, [], 60 * 30 * 1000);
         return [];
       }
 
@@ -57,7 +57,7 @@ export class MoviesService {
       }
 
       if (!response.data.Search) {
-        await this.cacheManager.set(cacheKey, [], 60 * 30);
+        await this.cacheManager.set(cacheKey, [], 60 * 30 * 1000);
         return [];
       }
 
