@@ -18,7 +18,7 @@ The project is deployed in the cloud, with each part on its own platform:
 
 | Part | Platform | URL |
 |---|---|---|
-| Frontend (Next.js) | [Vercel](https://vercel.com) | _coming soon_ |
+| Frontend (Next.js) | [Vercel](https://vercel.com) | https://nextflick-three.vercel.app |
 | Backend API (NestJS) | [Render](https://render.com) | https://nextflick-o00k.onrender.com |
 | API docs (Swagger) | Render | https://nextflick-o00k.onrender.com/api |
 
@@ -47,7 +47,7 @@ Requires **Node.js 22** (see `.nvmrc`). Backend and frontend live in the same re
 ### Backend → Render
 
 1. In Render, create a **Blueprint** from this repository (it reads [`render.yaml`](./render.yaml)), or a Web Service with Root Directory `backend`, build `npm ci --include=dev && npm run build` and start `npm run start:prod`.
-2. Fill in the secret environment variables: `MONGO_URI`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `OMDB_API_KEY` and `CORS_ORIGIN` (the Vercel URL, e.g. `https://nextflick.vercel.app`).
+2. Fill in the secret environment variables: `MONGO_URI`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `OMDB_API_KEY` and `CORS_ORIGIN` (the Vercel URL, `https://nextflick-three.vercel.app`).
 3. In MongoDB Atlas → Network Access, allow `0.0.0.0/0` (Render has no static outbound IP on the free plan).
 4. Health check: `GET /api` (Swagger docs).
 
