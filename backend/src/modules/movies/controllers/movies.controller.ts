@@ -1,8 +1,9 @@
-import { Controller, Get, Query, Logger } from '@nestjs/common';
+import { Controller, Get, Query, Param, Logger } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiQuery,
+  ApiParam,
   ApiResponse,
 } from '@nestjs/swagger';
 import { MoviesService } from '../services/movies.service';
@@ -72,5 +73,38 @@ export class MoviesController {
 
     this.logger.log(`Search completed: ${response.message}`);
     return response;
+  }
+
+  @Get(':imdbID')
+  @ApiOperation({
+    summary: 'Get movie details',
+    description: 'Fetch full details (plot, genre, rating, cast) of a movie from the OMDb API. Results are cached for 24 hours.',
+  })
+  @ApiParam({
+    name: 'imdbID',
+    description: 'IMDb ID of the movie',
+    example: 'tt0372784',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Movie details found successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid IMDb ID',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Movie not found',
+  })
+  async getMovieDetails(@Param('imdbID') imdbID: string) {
+    this.logger.log(`Details request for: "${imdbID}"`);
+
+    const movie = await this.moviesService.getMovieDetails(imdbID);
+
+    return {
+      success: true,
+      data: movie,
+    };
   }
 }

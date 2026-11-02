@@ -4,7 +4,13 @@ import type { Cache } from 'cache-manager';
 import { HttpService } from '@nestjs/axios';
 import type { ConfigType } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
-import { Movie, OmdbApiResponse } from '../interfaces/movie.interface';
+import {
+  Movie,
+  MovieDetails,
+  OmdbApiResponse,
+  OmdbDetailsApiResponse,
+} from '../interfaces/movie.interface';
+import { MovieNotFoundException } from '../exceptions/movies.exceptions';
 import { ErrorHandlerService } from '../../../common/error-handler/error-handler.service';
 import { ValidationService } from '../../../common/validation/validation.service';
 import moviesConfig from '../../../config/movies/movies.config';
@@ -82,6 +88,73 @@ export class MoviesService {
     }
   }
 
+  async getMovieDetails(imdbID: string): Promise<MovieDetails> {
+    this.validationService.validateImdbId(imdbID);
+
+    const cacheKey = `movies:details:${imdbID.trim()}`;
+
+    const cachedResult = await this.cacheManager.get<MovieDetails>(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+
+    let response: { data: OmdbDetailsApiResponse };
+    try {
+      response = await firstValueFrom(
+        this.httpService.get<OmdbDetailsApiResponse>(this.config.apiUrl, {
+          params: {
+            apikey: this.config.apiKey,
+            i: imdbID.trim(),
+            plot: 'full',
+          },
+        }),
+      );
+    } catch (error) {
+      this.logger.error(`Error fetching movie details: ${error.message}`);
+      if (error.response) {
+        this.errorHandler.handleHttpError(error, 'MoviesAPI');
+      }
+      throw error;
+    }
+
+    if (response.data.Response === 'False') {
+      const message = response.data.Error ?? '';
+      if (message.toLowerCase().includes('incorrect imdb id') || message.toLowerCase().includes('not found')) {
+        throw new MovieNotFoundException(`Movie ${imdbID} not found`);
+      }
+      this.errorHandler.handleApiError(response.data, 'MoviesAPI');
+    }
+
+    const details = this.transformMovieDetails(response.data);
+
+    await this.cacheManager.set(cacheKey, details, this.CACHE_TTL);
+
+    return details;
+  }
+
+  private transformMovieDetails(data: OmdbDetailsApiResponse): MovieDetails {
+    const value = (field: string) =>
+      data[field] && data[field] !== 'N/A' ? (data[field] as string) : null;
+
+    return {
+      imdbID: data.imdbID as string,
+      Title: data.Title as string,
+      Year: data.Year as string,
+      Poster: value('Poster') as string,
+      Type: data.Type as string,
+      Rated: value('Rated'),
+      Released: value('Released'),
+      Runtime: value('Runtime'),
+      Genre: value('Genre'),
+      Director: value('Director'),
+      Actors: value('Actors'),
+      Plot: value('Plot'),
+      Language: value('Language'),
+      Country: value('Country'),
+      imdbRating: value('imdbRating'),
+    };
+  }
+
   private transformMovies(movies: any[]): Movie[] {
     const uniqueMovies = movies.filter(
       (movie, index, self) =>
@@ -92,6 +165,7 @@ export class MoviesService {
       imdbID: movie.imdbID,
       Title: movie.Title,
       Year: movie.Year,
+      Type: movie.Type,
       Poster: movie.Poster !== 'N/A' ? movie.Poster : null,
     }));
   }

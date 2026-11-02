@@ -144,6 +144,19 @@ This endpoint allows users to search for movies using a query string. Results ar
 }
 ``` |
 
+### Movie Details (`GET /movies/:imdbID`)
+
+Returns the full details of a movie (plot, genre, rating, cast, etc.) from the OMDb API. Results are cached for 24 hours. Fields that OMDb reports as `N/A` are returned as `null`.
+
+-   **Method**: `GET`
+-   **URL**: `/movies/:imdbID`
+
+| Status Code | Description |
+| :---------- | :---------- |
+| `200 OK` | `{ "success": true, "data": { "imdbID": "tt0468569", "Title": "The Dark Knight", "Year": "2008", "Type": "movie", "Poster": "...", "Rated": "PG-13", "Released": "18 Jul 2008", "Runtime": "152 min", "Genre": "Crime, Thriller", "Director": "Christopher Nolan", "Actors": "...", "Plot": "...", "Language": "...", "Country": "...", "imdbRating": "9.1" } }` |
+| `400 Bad Request` | IMDb ID is not in the `tt1234567` format |
+| `404 Not Found` | No movie with that IMDb ID (`MOVIE_NOT_FOUND`) |
+
 ## Development Scripts
 
 ```bash

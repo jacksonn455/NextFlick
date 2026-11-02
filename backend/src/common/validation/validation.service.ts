@@ -42,4 +42,10 @@ export class ValidationService {
   validateSearchQuery(query: string): void {
     this.validateRequiredString(query, 'Search query', 2, 100);
   }
+
+  validateImdbId(imdbID: string): void {
+    if (!imdbID || !/^tt\d{7,10}$/.test(imdbID.trim())) {
+      throw new BadRequestException('Invalid IMDb ID format');
+    }
+  }
 }
