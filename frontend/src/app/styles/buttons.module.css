@@ -1,0 +1,83 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 0.2s var(--ease), opacity 0.2s var(--ease);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.primary {
+  background: var(--text);
+  color: #000;
+}
+
+.primary:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.secondary {
+  background: rgba(109, 109, 110, 0.7);
+  color: var(--text);
+}
+
+.secondary:hover {
+  background: rgba(109, 109, 110, 0.45);
+}
+
+.accent {
+  background: var(--accent);
+  color: var(--text);
+}
+
+.accent:hover {
+  background: var(--accent-hover);
+}
+
+.round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: rgba(20, 20, 20, 0.7);
+  color: var(--text);
+  transition: border-color 0.2s var(--ease), background-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+
+.round:hover {
+  border-color: var(--text);
+  transform: scale(1.08);
+}
+
+.roundActive {
+  background: var(--text);
+  border-color: var(--text);
+  color: #000;
+}
+
+.round:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 480px) {
+  .btn {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 0.9rem;
+  }
+}

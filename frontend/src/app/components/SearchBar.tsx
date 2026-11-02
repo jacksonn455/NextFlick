@@ -1,47 +1,44 @@
 // frontend/app/components/SearchBar.tsx
-"use client";
+'use client';
 
-import { useState } from 'react';
-import styles from '../styles/search.module.css';
+import { CloseIcon, SearchIcon } from './Icons';
+import styles from '../styles/page.module.css';
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
-  const [query, setQuery] = useState('');
-
+export default function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      onSearch(query.trim());
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
+    onSubmit();
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles['search-bar']}>
-      <div style={{ position: 'relative' }}>
-        <input
-          type="text"
-          value={query}
-          onChange={handleInputChange}
-          placeholder="Search for movies..."
-          className={styles['search-input']}
-          autoComplete="off"
-        />
-        <span className={styles['search-icon']}>🔍</span>
+    <form onSubmit={handleSubmit} className={styles.searchBar} role="search">
+      <SearchIcon size={22} className={styles.searchIcon} />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Titles, franchises, characters…"
+        className={styles.searchInput}
+        aria-label="Search movies"
+        autoComplete="off"
+        autoFocus
+      />
+      {value && (
         <button
-          type="submit"
-          className={styles['search-button']}
-          disabled={!query.trim()}
+          type="button"
+          className={styles.clearButton}
+          onClick={() => onChange('')}
+          aria-label="Clear search"
         >
-          Search
+          <CloseIcon size={20} />
         </button>
-      </div>
+      )}
     </form>
   );
 }

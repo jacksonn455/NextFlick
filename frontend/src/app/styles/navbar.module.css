@@ -1,0 +1,142 @@
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 100%);
+  transition: background-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+}
+
+.nav.scrolled {
+  background-color: var(--bg);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.container {
+  height: var(--nav-height);
+  padding: 0 var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo {
+  color: var(--accent);
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.links {
+  display: flex;
+  gap: 24px;
+}
+
+.link {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s var(--ease);
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.link.active {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconButton,
+.menuToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  color: var(--text);
+  transition: background-color 0.2s var(--ease);
+}
+
+.iconButton:hover,
+.menuToggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menuToggle {
+  display: none;
+}
+
+.mobileMenu {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .links {
+    display: none;
+  }
+
+  .menuToggle {
+    display: flex;
+  }
+
+  .logo {
+    font-size: 1.35rem;
+  }
+
+  .mobileMenu {
+    display: flex;
+    flex-direction: column;
+    padding: 0 var(--gutter);
+    background: var(--bg);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s var(--ease), padding 0.3s var(--ease);
+  }
+
+  .mobileMenu.open {
+    max-height: 240px;
+    padding-bottom: 12px;
+    box-shadow: 0 1px 0 var(--border);
+  }
+
+  .mobileLink {
+    padding: 14px 0;
+    color: var(--text-muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobileLink:last-child {
+    border-bottom: none;
+  }
+
+  .mobileLink.active {
+    color: var(--text);
+    font-weight: 700;
+  }
+}
+
+@media print {
+  .nav {
+    display: none;
+  }
+}

@@ -5,13 +5,20 @@ export interface Movie {
   Title: string;
   Year: string;
   Type?: string;
-  Poster: string;
+  Poster: string | null;
 }
 
-export interface SearchResponse {
-  Search: Movie[];
-  totalResults: string;
-  Response: string;
+export interface MovieDetails extends Movie {
+  Rated: string | null;
+  Released: string | null;
+  Runtime: string | null;
+  Genre: string | null;
+  Director: string | null;
+  Actors: string | null;
+  Plot: string | null;
+  Language: string | null;
+  Country: string | null;
+  imdbRating: string | null;
 }
 
 export interface Favorite {
@@ -28,3 +35,10 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
+
+export const favoriteToMovie = (favorite: Favorite): Movie => ({
+  imdbID: favorite.imdbID,
+  Title: favorite.title,
+  Year: favorite.year,
+  Poster: favorite.poster || null,
+});

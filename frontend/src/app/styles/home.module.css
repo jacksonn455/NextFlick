@@ -1,0 +1,12 @@
+.rows {
+  position: relative;
+  z-index: 2;
+  margin-top: -72px;
+  padding-bottom: 48px;
+}
+
+@media (max-width: 860px) {
+  .rows {
+    margin-top: -32px;
+  }
+}

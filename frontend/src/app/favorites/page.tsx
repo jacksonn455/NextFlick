@@ -1,58 +1,56 @@
 // frontend/app/favorites/page.tsx
 'use client';
 
+import Link from 'next/link';
+import MovieGrid, { SlowLoadingNotice } from '../components/MovieGrid';
 import { useFavorites } from '../hooks/useFavorites';
-import MovieCard from '../components/MovieCard';
-import styles from '../styles/favorites.module.css';
+import { getErrorMessage } from '../lib/api';
+import { favoriteToMovie } from '../types/movie';
+import buttons from '../styles/buttons.module.css';
+import styles from '../styles/page.module.css';
 
 export default function FavoritesPage() {
-  const { favorites, isLoading } = useFavorites();
-
-  if (isLoading) {
-    return (
-      <div className={styles['favorites-container']}>
-        <div className={styles['loading-container']}>
-          <div className={styles['loading-spinner']}></div>
-          <p className={styles['loading-text']}>Loading favorites...</p>
-        </div>
-      </div>
-    );
-  }
+  const { favorites, isLoading, error, refetch } = useFavorites();
 
   return (
-    <div className={styles['favorites-container']}>
-      <div className={styles.container}>
-        <h1 className={styles['favorites-title']}>❤️ My Favorite Movies</h1>
-        
-        {!favorites || favorites.length === 0 ? (
-          <div className={styles['empty-state']}>
-            <h3>No favorite movies yet!</h3>
-            <p>Go to the search page and add some movies to your favorites.</p>
-            <a href="/search" className={styles['btn-primary']}>
-              Search Movies
-            </a>
-          </div>
-        ) : (
-          <>
-            <p className={styles['favorites-subtitle']}>
-              You have {favorites.length} favorite movie{favorites.length !== 1 ? 's' : ''}
-            </p>
-            <div className={styles['movies-grid']}>
-              {favorites.map((favorite) => (
-                <MovieCard
-                  key={favorite._id}
-                  movie={{
-                    imdbID: favorite.imdbID,
-                    Title: favorite.title,
-                    Year: favorite.year,
-                    Poster: favorite.poster || '',
-                  }}
-                />
-              ))}
-            </div>
-          </>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.pageTitle}>My List</h1>
+        {favorites && favorites.length > 0 && (
+          <p className={styles.count}>
+            {favorites.length} title{favorites.length !== 1 ? 's' : ''}
+          </p>
         )}
-      </div>
+      </header>
+
+      {isLoading && (
+        <>
+          <SlowLoadingNotice />
+          <MovieGrid isLoading />
+        </>
+      )}
+
+      {error && (
+        <div className={styles.state}>
+          <h2>We couldn&apos;t load your list</h2>
+          <p>{getErrorMessage(error)}</p>
+          <button type="button" className={`${buttons.btn} ${buttons.primary}`} onClick={() => refetch()}>
+            Try again
+          </button>
+        </div>
+      )}
+
+      {favorites && favorites.length === 0 && (
+        <div className={styles.state}>
+          <h2>Your list is empty</h2>
+          <p>Add movies to your list to keep track of what you want to watch.</p>
+          <Link href="/search" className={`${buttons.btn} ${buttons.accent}`}>
+            Browse movies
+          </Link>
+        </div>
+      )}
+
+      {favorites && favorites.length > 0 && <MovieGrid movies={favorites.map(favoriteToMovie)} />}
     </div>
   );
 }

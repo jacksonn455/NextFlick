@@ -1,68 +1,108 @@
 // frontend/app/search/page.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import SearchBar from "../components/SearchBar";
-import MovieCard from "../components/MovieCard";
-import { useMovies } from "../hooks/useMovies";
-import styles from '../styles/search.module.css';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import SearchBar from '../components/SearchBar';
+import MovieGrid, { SlowLoadingNotice } from '../components/MovieGrid';
+import { MIN_QUERY_LENGTH, useMovies } from '../hooks/useMovies';
+import { getErrorMessage } from '../lib/api';
+import styles from '../styles/page.module.css';
 
-export default function SearchPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const { data: movies, isLoading, error } = useMovies(searchQuery);
+const DEBOUNCE_MS = 400;
+const SUGGESTIONS = ['Batman', 'Star Wars', 'Harry Potter', 'Matrix', 'Toy Story', 'Jurassic Park', 'Spider-Man', 'Inception'];
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
+function SearchContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // The URL is the source of truth, so results survive refresh, back navigation and sharing
+  const query = searchParams.get('q') ?? '';
+  const [input, setInput] = useState(query);
+  const [syncedQuery, setSyncedQuery] = useState(query);
+  const { data: movies, isLoading, error } = useMovies(query);
+
+  // Keep the input in sync when the URL changes from outside (back/forward navigation)
+  if (query !== syncedQuery) {
+    setSyncedQuery(query);
+    if (query !== input.trim()) setInput(query);
+  }
+
+  const updateUrl = (value: string) => {
+    const trimmed = value.trim();
+    router.replace(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : '/search', { scroll: false });
   };
 
+  // Search as the user types, after a short pause
+  useEffect(() => {
+    if (input.trim() === query) return;
+    const timeout = setTimeout(() => updateUrl(input), DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [input]);
+
+  const pickSuggestion = (term: string) => {
+    setInput(term);
+    updateUrl(term);
+  };
+
+  const isTooShort = query.length > 0 && query.length < MIN_QUERY_LENGTH;
+
   return (
-    <div className={styles['movie-search-container']}>
-      <div className={styles.container}>
-        <h1 className={styles['movie-search-title']}>
-          🔍 Search Movies
-        </h1>
+    <div className={styles.page}>
+      <SearchBar value={input} onChange={setInput} onSubmit={() => updateUrl(input)} />
 
-        <div className={styles['search-container']}>
-          <SearchBar onSearch={handleSearch} />
+      {!query && (
+        <div className={styles.suggestions}>
+          <h2 className={styles.sectionTitle}>Popular searches</h2>
+          <div className={styles.chips}>
+            {SUGGESTIONS.map((term) => (
+              <button key={term} type="button" className={styles.chip} onClick={() => pickSuggestion(term)}>
+                {term}
+              </button>
+            ))}
+          </div>
         </div>
+      )}
 
-        {isLoading && (
-          <div className={styles['loading-container']}>
-            <div className={styles['loading-spinner']}></div>
-            <p className={styles['loading-text']}>Searching for movies...</p>
+      {isTooShort && <p className={styles.hint}>Type at least {MIN_QUERY_LENGTH} characters to search.</p>}
+
+      {error && (
+        <div className={styles.state}>
+          <h2>Something went wrong</h2>
+          <p>{getErrorMessage(error)}</p>
+        </div>
+      )}
+
+      {isLoading && (
+        <>
+          <SlowLoadingNotice />
+          <MovieGrid isLoading />
+        </>
+      )}
+
+      {movies && !isLoading && (
+        movies.length === 0 ? (
+          <div className={styles.state}>
+            <h2>No results for &quot;{query}&quot;</h2>
+            <p>Try a different title, or check the spelling. Searches work best in English.</p>
           </div>
-        )}
-
-        {error && (
-          <div className={styles['error-message']}>
-            Error: {error.message}
-          </div>
-        )}
-
-        {movies && (
-          <div className={styles['results-section']}>
-            <h2 className={styles['movie-search-subtitle']}>
-              Results for &quot;{searchQuery}&quot; ({movies.length} movies)
+        ) : (
+          <>
+            <h2 className={styles.sectionTitle}>
+              {movies.length} result{movies.length !== 1 ? 's' : ''} for &quot;{query}&quot;
             </h2>
-
-            {movies.length === 0 ? (
-              <div className={styles['empty-state']}>
-                <h3>No movies found</h3>
-                <p>
-                  No movies found for &quot;{searchQuery}&quot;. Try a different search
-                  term.
-                </p>
-              </div>
-            ) : (
-              <div className={styles['movies-grid']}>
-                {movies.map((movie) => (
-                  <MovieCard key={movie.imdbID} movie={movie} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+            <MovieGrid movies={movies} />
+          </>
+        )
+      )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <SearchContent />
+    </Suspense>
   );
 }

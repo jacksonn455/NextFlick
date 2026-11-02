@@ -1,22 +1,35 @@
 // frontend/hooks/useMovies.ts
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { Movie, ApiResponse } from '../types/movie';
+import { api } from '../lib/api';
+import { Movie, MovieDetails, ApiResponse } from '../types/movie';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+// The backend rejects queries shorter than this
+export const MIN_QUERY_LENGTH = 2;
 
 export const useMovies = (query: string) => {
+  const trimmed = query.trim();
+
   return useQuery({
-    queryKey: ['movies', query],
+    queryKey: ['movies', trimmed.toLowerCase()],
     queryFn: async (): Promise<Movie[]> => {
-      if (!query.trim()) return [];
-      
-      const { data } = await axios.get<ApiResponse<Movie[]>>(
-        `${API_BASE_URL}/movies/search?q=${encodeURIComponent(query)}`
-      );
+      const { data } = await api.get<ApiResponse<Movie[]>>('/movies/search', {
+        params: { q: trimmed },
+      });
       return data.data;
     },
-    enabled: !!query.trim(),
+    enabled: trimmed.length >= MIN_QUERY_LENGTH,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useMovieDetails = (imdbID: string | null) => {
+  return useQuery({
+    queryKey: ['movie', imdbID],
+    queryFn: async (): Promise<MovieDetails> => {
+      const { data } = await api.get<ApiResponse<MovieDetails>>(`/movies/${imdbID}`);
+      return data.data;
+    },
+    enabled: !!imdbID,
+    staleTime: 30 * 60 * 1000, // 30 minutes
   });
 };
