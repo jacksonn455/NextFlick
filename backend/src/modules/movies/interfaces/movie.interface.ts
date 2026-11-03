@@ -26,7 +26,8 @@ export interface OmdbApiResponse {
   Response: string;
 }
 
-export interface OmdbDetailsApiResponse extends Record<string, string | undefined> {
+export interface OmdbDetailsApiResponse
+  extends Record<string, string | undefined> {
   Error?: string;
   Response: string;
 }

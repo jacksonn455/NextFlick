@@ -8,12 +8,10 @@ import moviesConfig from '../../../../../src/config/movies/movies.config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MovieNotFoundException } from '../../../../../src/modules/movies/exceptions/movies.exceptions';
 
-
 describe('MoviesService (unit)', () => {
   let service: MoviesService;
   let httpService: HttpService;
   let cacheManager: any;
-  let errorHandler: ErrorHandlerService;
   let validationService: ValidationService;
 
   const mockConfig = {
@@ -35,7 +33,10 @@ describe('MoviesService (unit)', () => {
         },
         {
           provide: ValidationService,
-          useValue: { validateSearchQuery: jest.fn(), validateImdbId: jest.fn() },
+          useValue: {
+            validateSearchQuery: jest.fn(),
+            validateImdbId: jest.fn(),
+          },
         },
         {
           provide: CACHE_MANAGER,
@@ -51,17 +52,25 @@ describe('MoviesService (unit)', () => {
     service = module.get(MoviesService);
     httpService = module.get(HttpService);
     cacheManager = module.get(CACHE_MANAGER);
-    errorHandler = module.get(ErrorHandlerService);
     validationService = module.get(ValidationService);
   });
 
   it('should return cached movies if available', async () => {
-    const cachedMovies = [{ Title: 'Inception', imdbID: 'tt1375666', Year: '2010', Poster: 'poster.jpg' }];
+    const cachedMovies = [
+      {
+        Title: 'Inception',
+        imdbID: 'tt1375666',
+        Year: '2010',
+        Poster: 'poster.jpg',
+      },
+    ];
     cacheManager.get.mockResolvedValue(cachedMovies);
 
     const result = await service.searchMovies('Inception');
 
-    expect(validationService.validateSearchQuery).toHaveBeenCalledWith('Inception');
+    expect(validationService.validateSearchQuery).toHaveBeenCalledWith(
+      'Inception',
+    );
     expect(result).toEqual(cachedMovies);
     expect(httpService.get).not.toHaveBeenCalled();
   });
@@ -73,7 +82,12 @@ describe('MoviesService (unit)', () => {
       data: {
         Response: 'True',
         Search: [
-          { Title: 'Inception', imdbID: 'tt1375666', Year: '2010', Poster: 'poster.jpg' },
+          {
+            Title: 'Inception',
+            imdbID: 'tt1375666',
+            Year: '2010',
+            Poster: 'poster.jpg',
+          },
         ],
       },
     };
@@ -92,7 +106,9 @@ describe('MoviesService (unit)', () => {
   it('should return empty array if API says movie not found', async () => {
     cacheManager.get.mockResolvedValue(null);
 
-    const apiResponse = { data: { Response: 'False', Error: 'Movie not found!' } };
+    const apiResponse = {
+      data: { Response: 'False', Error: 'Movie not found!' },
+    };
     (httpService.get as jest.Mock).mockReturnValue(of(apiResponse));
 
     const result = await service.searchMovies('UnknownMovie');
@@ -105,7 +121,9 @@ describe('MoviesService (unit)', () => {
     // Primeiro mock: cache vazio
     cacheManager.get.mockResolvedValueOnce(null);
     // Segundo mock: cache retorna valor após erro
-    cacheManager.get.mockResolvedValueOnce([{ Title: 'Cached', imdbID: 'tt0001', Year: '1999', Poster: 'poster.jpg' }]);
+    cacheManager.get.mockResolvedValueOnce([
+      { Title: 'Cached', imdbID: 'tt0001', Year: '1999', Poster: 'poster.jpg' },
+    ]);
 
     // Mock do erro HTTP
     (httpService.get as jest.Mock).mockReturnValue(
@@ -114,8 +132,12 @@ describe('MoviesService (unit)', () => {
 
     const result = await service.searchMovies('Inception');
 
-    expect(validationService.validateSearchQuery).toHaveBeenCalledWith('Inception');
-    expect(result).toEqual([{ Title: 'Cached', imdbID: 'tt0001', Year: '1999', Poster: 'poster.jpg' }]);
+    expect(validationService.validateSearchQuery).toHaveBeenCalledWith(
+      'Inception',
+    );
+    expect(result).toEqual([
+      { Title: 'Cached', imdbID: 'tt0001', Year: '1999', Poster: 'poster.jpg' },
+    ]);
   });
 
   describe('getMovieDetails', () => {
@@ -144,7 +166,9 @@ describe('MoviesService (unit)', () => {
 
       const result = await service.getMovieDetails('tt0372784');
 
-      expect(validationService.validateImdbId).toHaveBeenCalledWith('tt0372784');
+      expect(validationService.validateImdbId).toHaveBeenCalledWith(
+        'tt0372784',
+      );
       expect(result).toEqual(cached);
       expect(httpService.get).not.toHaveBeenCalled();
     });

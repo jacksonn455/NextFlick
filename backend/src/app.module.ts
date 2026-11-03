@@ -15,11 +15,13 @@ import { RedisModule } from './config/redis/redis.module';
       ignoreEnvFile: process.env.NODE_ENV === 'production',
       load: [moviesConfig],
     }),
-        MongooseModule.forRootAsync({
+    MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/NextFlick',
+        uri:
+          configService.get<string>('MONGO_URI') ||
+          'mongodb://localhost:27017/NextFlick',
       }),
     }),
     RedisModule,

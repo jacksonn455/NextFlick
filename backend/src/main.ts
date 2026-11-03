@@ -8,10 +8,12 @@ config({ path: resolve(process.cwd(), '.env') });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   app.useGlobalPipes(new ValidationPipe());
   // CORS_ORIGIN: comma-separated list of allowed origins (all origins when unset)
-  const corsOrigin = process.env.CORS_ORIGIN?.split(',').map((origin) => origin.trim());
+  const corsOrigin = process.env.CORS_ORIGIN?.split(',').map((origin) =>
+    origin.trim(),
+  );
   app.enableCors({ origin: corsOrigin?.length ? corsOrigin : true });
 
   const config = new DocumentBuilder()
@@ -21,12 +23,12 @@ async function bootstrap() {
     .addTag('Movies', 'Endpoints for searching movies')
     .addTag('Favorites', 'Endpoints for managing favorite movies')
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {
     customSiteTitle: 'NextFlick API Documentation',
   });
-  
+
   await app.listen(process.env.PORT ?? 3000);
 }
 

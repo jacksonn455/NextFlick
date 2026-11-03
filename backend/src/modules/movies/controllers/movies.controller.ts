@@ -23,7 +23,8 @@ export class MoviesController {
   @Get('search')
   @ApiOperation({
     summary: 'Search movies',
-    description: 'Search for movies using the OMDb API. Results are cached for 24 hours.',
+    description:
+      'Search for movies using the OMDb API. Results are cached for 24 hours.',
   })
   @ApiQuery({
     name: 'q',
@@ -55,7 +56,7 @@ export class MoviesController {
   })
   async searchMovies(@Query('q') query: string) {
     this.logger.log(`Search request for: "${query}"`);
-    
+
     this.validationService.validateSearchQuery(query);
 
     const movies = await this.moviesService.searchMovies(query);
@@ -78,7 +79,8 @@ export class MoviesController {
   @Get(':imdbID')
   @ApiOperation({
     summary: 'Get movie details',
-    description: 'Fetch full details (plot, genre, rating, cast) of a movie from the OMDb API. Results are cached for 24 hours.',
+    description:
+      'Fetch full details (plot, genre, rating, cast) of a movie from the OMDb API. Results are cached for 24 hours.',
   })
   @ApiParam({
     name: 'imdbID',

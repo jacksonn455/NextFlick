@@ -22,7 +22,8 @@ export class AddFavoriteDto {
 
   @ApiProperty({
     description: 'URL to the movie poster',
-    example: 'https://m.media-amazon.com/images/M/MV5BODIyMDdhNTgtNDlmOC00MjUxLWE2NDItODA5MTdkNzY3ZTdhXkEyXkFqcGc@._V1_SX300.jpg',
+    example:
+      'https://m.media-amazon.com/images/M/MV5BODIyMDdhNTgtNDlmOC00MjUxLWE2NDItODA5MTdkNzY3ZTdhXkEyXkFqcGc@._V1_SX300.jpg',
     required: false,
   })
   poster?: string;

@@ -119,7 +119,10 @@ export class MoviesService {
 
     if (response.data.Response === 'False') {
       const message = response.data.Error ?? '';
-      if (message.toLowerCase().includes('incorrect imdb id') || message.toLowerCase().includes('not found')) {
+      if (
+        message.toLowerCase().includes('incorrect imdb id') ||
+        message.toLowerCase().includes('not found')
+      ) {
         throw new MovieNotFoundException(`Movie ${imdbID} not found`);
       }
       this.errorHandler.handleApiError(response.data, 'MoviesAPI');

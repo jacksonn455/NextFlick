@@ -53,7 +53,9 @@ function createUpstashCache(redis: Redis, logger: Logger): Cache {
         const token = configService.get<string>('UPSTASH_REDIS_REST_TOKEN');
 
         if (!url || !token) {
-          logger.warn('Upstash credentials not set, falling back to in-memory cache');
+          logger.warn(
+            'Upstash credentials not set, falling back to in-memory cache',
+          );
           return createCache({ ttl: DEFAULT_TTL_MS });
         }
 
