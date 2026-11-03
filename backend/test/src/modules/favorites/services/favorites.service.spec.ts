@@ -4,10 +4,6 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FavoritesService } from '../../../../../src/modules/favorites/services/favorites.service';
 import { Favorite } from '../../../../../src/modules/favorites/entities/favorite.entity';
 
-interface MongoError extends Error {
-  code?: number;
-}
-
 const mockUserId = 'user-123';
 const mockMovieData = {
   imdbID: 'tt0372784',
@@ -74,6 +70,46 @@ describe('FavoritesService', () => {
         userId: mockUserId,
         imdbID: mockMovieData.imdbID,
       });
+    });
+
+    it('should let different users favorite the same movie', async () => {
+      favoriteModel.findOne.mockResolvedValue(null);
+
+      await service.addFavorite('user-a', mockMovieData);
+      await service.addFavorite('user-b', mockMovieData);
+
+      expect(favoriteModel.findOne).toHaveBeenNthCalledWith(1, {
+        userId: 'user-a',
+        imdbID: mockMovieData.imdbID,
+      });
+      expect(favoriteModel.findOne).toHaveBeenNthCalledWith(2, {
+        userId: 'user-b',
+        imdbID: mockMovieData.imdbID,
+      });
+      expect(favoriteModel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-b',
+          imdbID: mockMovieData.imdbID,
+        }),
+      );
+    });
+  });
+
+  describe('onModuleInit', () => {
+    it('should sync indexes to drop the old unique imdbID index', async () => {
+      favoriteModel.syncIndexes = jest.fn().mockResolvedValue(['imdbID_1']);
+
+      await service.onModuleInit();
+
+      expect(favoriteModel.syncIndexes).toHaveBeenCalled();
+    });
+
+    it('should not throw when syncing indexes fails', async () => {
+      favoriteModel.syncIndexes = jest
+        .fn()
+        .mockRejectedValue(new Error('offline'));
+
+      await expect(service.onModuleInit()).resolves.toBeUndefined();
     });
   });
 

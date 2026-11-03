@@ -1,6 +1,6 @@
 //
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type FavoriteDocument = Favorite & Document;
 
@@ -9,7 +9,8 @@ export class Favorite {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true, unique: true })
+  // Not unique on its own: many users can favorite the same movie (see compound index below)
+  @Prop({ required: true })
   imdbID: string;
 
   @Prop({ required: true })

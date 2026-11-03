@@ -15,14 +15,25 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { FavoritesService } from '../services/favorites.service';
 import { AddFavoriteDto } from '../dtos/add-favorite.dto';
 import { FavoriteResponseDto } from '../dtos/favorite-response.dto';
 import { FavoritesListResponseDto } from '../dtos/favorites-list-response.dto';
-const MOCK_USER_ID = 'user-123';
+import {
+  DEFAULT_USER_ID,
+  USER_ID_HEADER,
+  UserId,
+} from '../../../common/decorators/user-id.decorator';
 
 @ApiTags('Favorites')
+@ApiHeader({
+  name: USER_ID_HEADER,
+  required: false,
+  description: `User the favorites belong to (defaults to "${DEFAULT_USER_ID}")`,
+  example: DEFAULT_USER_ID,
+})
 @Controller('favorites')
 export class FavoritesController {
   private readonly logger = new Logger(FavoritesController.name);
@@ -48,13 +59,13 @@ export class FavoritesController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Invalid movie data provided',
   })
-  async addFavorite(@Body() movieData: AddFavoriteDto) {
+  async addFavorite(
+    @UserId() userId: string,
+    @Body() movieData: AddFavoriteDto,
+  ) {
     this.logger.log(`Adding movie to favorites: ${movieData.imdbID}`);
-    
-    const favorite = await this.favoritesService.addFavorite(
-      MOCK_USER_ID,
-      movieData,
-    );
+
+    const favorite = await this.favoritesService.addFavorite(userId, movieData);
 
     return {
       success: true,
@@ -82,10 +93,13 @@ export class FavoritesController {
     status: HttpStatus.NOT_FOUND,
     description: 'Favorite movie not found',
   })
-  async removeFavorite(@Param('imdbID') imdbID: string) {
+  async removeFavorite(
+    @UserId() userId: string,
+    @Param('imdbID') imdbID: string,
+  ) {
     this.logger.log(`Removing favorite: ${imdbID}`);
-    
-    await this.favoritesService.removeFavorite(MOCK_USER_ID, imdbID);
+
+    await this.favoritesService.removeFavorite(userId, imdbID);
 
     return {
       success: true,
@@ -103,10 +117,10 @@ export class FavoritesController {
     description: 'Favorites retrieved successfully',
     type: FavoritesListResponseDto,
   })
-  async getFavorites() {
+  async getFavorites(@UserId() userId: string) {
     this.logger.log('Fetching user favorites');
-    
-    const favorites = await this.favoritesService.getUserFavorites(MOCK_USER_ID);
+
+    const favorites = await this.favoritesService.getUserFavorites(userId);
 
     return {
       success: true,
@@ -135,11 +149,14 @@ export class FavoritesController {
     status: HttpStatus.NOT_FOUND,
     description: 'Favorite movie not found',
   })
-  async getFavorite(@Param('imdbID') imdbID: string) {
+  async getFavorite(@UserId() userId: string, @Param('imdbID') imdbID: string) {
     this.logger.log(`Fetching favorite: ${imdbID}`);
-    
-    const favorite = await this.favoritesService.getFavoriteById(MOCK_USER_ID, imdbID);
-    
+
+    const favorite = await this.favoritesService.getFavoriteById(
+      userId,
+      imdbID,
+    );
+
     return {
       success: true,
       data: favorite,

@@ -2,18 +2,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, getErrorMessage } from '../lib/api';
 import { useToast } from '../context/ToastContext';
+import { useCurrentUserId } from '../lib/user';
 import { Favorite, Movie, ApiResponse } from '../types/movie';
-
-const FAVORITES_KEY = ['favorites'];
 
 type MutationContext = { previous?: Favorite[] };
 
 export const useFavorites = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  // Each user has its own cached list, so switching users never shows someone else's favorites
+  const userId = useCurrentUserId();
+  const favoritesKey = ['favorites', userId];
 
   const { data: favorites, isLoading, error, refetch } = useQuery({
-    queryKey: FAVORITES_KEY,
+    queryKey: favoritesKey,
     queryFn: async (): Promise<Favorite[]> => {
       const { data } = await api.get<ApiResponse<Favorite[]>>('/favorites');
       return data.data;
@@ -22,14 +24,14 @@ export const useFavorites = () => {
 
   // Snapshot the list and apply the change right away, so the UI reacts instantly
   const applyOptimistic = async (update: (current: Favorite[]) => Favorite[]): Promise<MutationContext> => {
-    await queryClient.cancelQueries({ queryKey: FAVORITES_KEY });
-    const previous = queryClient.getQueryData<Favorite[]>(FAVORITES_KEY);
-    queryClient.setQueryData<Favorite[]>(FAVORITES_KEY, (current = []) => update(current));
+    await queryClient.cancelQueries({ queryKey: favoritesKey });
+    const previous = queryClient.getQueryData<Favorite[]>(favoritesKey);
+    queryClient.setQueryData<Favorite[]>(favoritesKey, (current = []) => update(current));
     return { previous };
   };
 
   const rollback = (context: MutationContext | undefined) => {
-    queryClient.setQueryData(FAVORITES_KEY, context?.previous);
+    queryClient.setQueryData(favoritesKey, context?.previous);
   };
 
   const addFavorite = useMutation<Favorite, Error, Movie, MutationContext>({
@@ -58,7 +60,7 @@ export const useFavorites = () => {
       showToast(`Couldn't add "${movie.Title}". ${getErrorMessage(error)}`, 'error');
     },
     onSuccess: (_, movie) => showToast(`"${movie.Title}" added to My List`),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: FAVORITES_KEY }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: favoritesKey }),
   });
 
   const removeFavorite = useMutation<void, Error, Movie, MutationContext>({
@@ -72,7 +74,7 @@ export const useFavorites = () => {
       showToast(`Couldn't remove "${movie.Title}". ${getErrorMessage(error)}`, 'error');
     },
     onSuccess: (_, movie) => showToast(`"${movie.Title}" removed from My List`),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: FAVORITES_KEY }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: favoritesKey }),
   });
 
   const checkIsFavorite = (imdbID: string): boolean => {

@@ -157,6 +157,16 @@ Returns the full details of a movie (plot, genre, rating, cast, etc.) from the O
 | `400 Bad Request` | IMDb ID is not in the `tt1234567` format |
 | `404 Not Found` | No movie with that IMDb ID (`MOVIE_NOT_FOUND`) |
 
+### Favorites (`/favorites`)
+
+`POST /favorites`, `GET /favorites`, `GET /favorites/:imdbID` and `DELETE /favorites/:imdbID` act on the favorites of one user. There is no authentication yet: the user is read from the `x-user-id` header.
+
+| Header | Required | Description |
+| :----- | :------- | :---------- |
+| `x-user-id` | No | 1-50 letters, numbers, `-` or `_`. Defaults to `user-123` when missing. Invalid values return `400 Bad Request`. |
+
+Different users can favorite the same movie; the same user cannot add a movie twice (`409 Conflict`). On startup the service syncs the collection indexes, which drops the old unique `imdbID_1` index from databases created before multi-user support.
+
 ## Development Scripts
 
 ```bash

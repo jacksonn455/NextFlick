@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CloseIcon, MenuIcon, SearchIcon } from './Icons';
+import UserSwitcher from './UserSwitcher';
 import styles from '../styles/navbar.module.css';
 
 const NAV_LINKS = [
@@ -66,6 +67,7 @@ export default function Navbar() {
           <Link href="/search" className={styles.iconButton} aria-label="Search movies">
             <SearchIcon size={22} />
           </Link>
+          <UserSwitcher />
           <button
             className={styles.menuToggle}
             onClick={toggleMobileMenu}
