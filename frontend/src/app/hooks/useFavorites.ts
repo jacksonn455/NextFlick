@@ -2,7 +2,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, getErrorMessage } from '../lib/api';
 import { useToast } from '../context/ToastContext';
-import { useCurrentUserId } from '../lib/user';
+import { userHeaders } from '../lib/user';
+import { useUsers } from './useUsers';
 import { Favorite, Movie, ApiResponse } from '../types/movie';
 
 type MutationContext = { previous?: Favorite[] };
@@ -10,16 +11,21 @@ type MutationContext = { previous?: Favorite[] };
 export const useFavorites = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const { currentUser, isLoading: isLoadingUsers, error: usersError } = useUsers();
+  const userId = currentUser?._id;
   // Each user has its own cached list, so switching users never shows someone else's favorites
-  const userId = useCurrentUserId();
   const favoritesKey = ['favorites', userId];
 
-  const { data: favorites, isLoading, error, refetch } = useQuery({
+  const { data: favorites, isLoading: isLoadingFavorites, error: favoritesError, refetch } = useQuery({
     queryKey: favoritesKey,
     queryFn: async (): Promise<Favorite[]> => {
-      const { data } = await api.get<ApiResponse<Favorite[]>>('/favorites');
+      const { data } = await api.get<ApiResponse<Favorite[]>>('/favorites', {
+        headers: userHeaders(userId!),
+      });
       return data.data;
     },
+    // Waits for the users list, which tells whose favorites to load
+    enabled: !!userId,
   });
 
   // Snapshot the list and apply the change right away, so the UI reacts instantly
@@ -41,7 +47,7 @@ export const useFavorites = () => {
         title: movie.Title,
         year: movie.Year,
         poster: movie.Poster || undefined,
-      });
+      }, { headers: userHeaders(userId!) });
       return data.data;
     },
     onMutate: (movie) =>
@@ -65,7 +71,7 @@ export const useFavorites = () => {
 
   const removeFavorite = useMutation<void, Error, Movie, MutationContext>({
     mutationFn: async (movie) => {
-      await api.delete(`/favorites/${movie.imdbID}`);
+      await api.delete(`/favorites/${movie.imdbID}`, { headers: userHeaders(userId!) });
     },
     onMutate: (movie) =>
       applyOptimistic((current) => current.filter((fav) => fav.imdbID !== movie.imdbID)),
@@ -82,6 +88,7 @@ export const useFavorites = () => {
   };
 
   const toggleFavorite = (movie: Movie) => {
+    if (!userId) return;
     if (checkIsFavorite(movie.imdbID)) {
       removeFavorite.mutate(movie);
     } else {
@@ -91,8 +98,8 @@ export const useFavorites = () => {
 
   return {
     favorites,
-    isLoading,
-    error,
+    isLoading: isLoadingUsers || isLoadingFavorites,
+    error: usersError ?? favoritesError,
     refetch,
     checkIsFavorite,
     toggleFavorite,

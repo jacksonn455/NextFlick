@@ -1,38 +1,20 @@
 // frontend/app/lib/user.ts
 import { useSyncExternalStore } from 'react';
 
-export interface DemoUser {
-  id: string;
-  name: string;
-}
-
-// There is no login yet: each demo user has its own favorites list on the backend.
-// "user-123" is the backend default, so favorites saved before this change stay visible.
-export const DEMO_USERS: DemoUser[] = [
-  { id: 'user-123', name: 'Guest' },
-  { id: 'ana-lima', name: 'Ana Lima' },
-  { id: 'bruno-ferreira', name: 'Bruno Ferreira' },
-  { id: 'carla-souza', name: 'Carla Souza' },
-  { id: 'diego-alves', name: 'Diego Alves' },
-];
-
-export const DEFAULT_USER_ID = DEMO_USERS[0].id;
-
+// Remembers which user was picked in the switcher (the user's MongoDB _id)
 const STORAGE_KEY = 'nextflick:userId';
 const CHANGE_EVENT = 'nextflick:user-change';
 
 // Storage can throw in private windows or when site data is blocked
-export const getCurrentUserId = (): string => {
-  if (typeof window === 'undefined') return DEFAULT_USER_ID;
+const getStoredUserId = (): string | null => {
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    return DEMO_USERS.some((user) => user.id === stored) ? stored! : DEFAULT_USER_ID;
+    return window.localStorage.getItem(STORAGE_KEY);
   } catch {
-    return DEFAULT_USER_ID;
+    return null;
   }
 };
 
-export const setCurrentUserId = (userId: string) => {
+export const setStoredUserId = (userId: string) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, userId);
   } catch {
@@ -51,5 +33,21 @@ const subscribe = (onChange: () => void) => {
   };
 };
 
-export const useCurrentUserId = () =>
-  useSyncExternalStore(subscribe, getCurrentUserId, () => DEFAULT_USER_ID);
+export const useStoredUserId = () =>
+  useSyncExternalStore(subscribe, getStoredUserId, () => null);
+
+// Favorites (and later recommendations) belong to the user sent in this header
+export const userHeaders = (userId: string) => ({ 'x-user-id': userId });
+
+// Same rule as the backend's CreateUserDto
+export const USERNAME_PATTERN = /^[a-z0-9-]{3,30}$/;
+
+// "Ana Lima" -> "ana-lima", "João Mendes" -> "joao-mendes"
+export const toUsername = (name: string) =>
+  name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 30);

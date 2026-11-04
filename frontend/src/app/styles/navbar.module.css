@@ -139,6 +139,15 @@
     font-size: 1.35rem;
   }
 
+  .userSwitcher {
+    gap: 4px;
+    margin-left: 0;
+  }
+
+  .userSelect {
+    max-width: 110px;
+  }
+
   .mobileMenu {
     display: flex;
     flex-direction: column;
@@ -169,6 +178,12 @@
   .mobileLink.active {
     color: var(--text);
     font-weight: 700;
+  }
+}
+
+@media (max-width: 420px) {
+  .avatar {
+    display: none;
   }
 }
 

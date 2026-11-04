@@ -1,17 +1,10 @@
 // frontend/app/lib/api.ts
 import axios from 'axios';
-import { getCurrentUserId } from './user';
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
   // The backend sleeps on Render's free plan; the first request can take ~50s
   timeout: 60000,
-});
-
-// Tells the backend whose favorites to read and change
-api.interceptors.request.use((config) => {
-  config.headers.set('x-user-id', getCurrentUserId());
-  return config;
 });
 
 // Turns any request error into a message that can be shown to the user
