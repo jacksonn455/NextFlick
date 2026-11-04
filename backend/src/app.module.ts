@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MoviesModule } from './modules/movies/modules/movies.module';
 import { FavoritesModule } from './modules/favorites/modules/favorites.module';
+import { UsersModule } from './modules/users/modules/users.module';
 import moviesConfig from './config/movies/movies.config';
 import { CommonModule } from './common/common.module';
 import { RedisModule } from './config/redis/redis.module';
@@ -27,6 +28,7 @@ import { RedisModule } from './config/redis/redis.module';
     RedisModule,
     CommonModule,
     MoviesModule,
+    UsersModule,
     FavoritesModule,
   ],
 })

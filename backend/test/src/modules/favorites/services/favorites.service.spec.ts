@@ -3,8 +3,11 @@ import { getModelToken } from '@nestjs/mongoose';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { FavoritesService } from '../../../../../src/modules/favorites/services/favorites.service';
 import { Favorite } from '../../../../../src/modules/favorites/entities/favorite.entity';
+import { UsersService } from '../../../../../src/modules/users/services/users.service';
+import { MovieCatalogService } from '../../../../../src/modules/movies/services/movie-catalog.service';
 
-const mockUserId = 'user-123';
+const mockUserId = '64f1a2b3c5d6e7f8a9b0c1aa';
+const otherUserId = '64f1a2b3c5d6e7f8a9b0c1bb';
 const mockMovieData = {
   imdbID: 'tt0372784',
   title: 'Batman Begins',
@@ -27,6 +30,8 @@ const mockFavorite = {
 describe('FavoritesService', () => {
   let service: FavoritesService;
   let favoriteModel: any;
+  let usersService: { findById: jest.Mock; findOrCreate: jest.Mock };
+  let catalogService: { ensureMovie: jest.Mock };
 
   beforeEach(async () => {
     const mockFavoriteModel = jest.fn().mockImplementation(() => ({
@@ -39,6 +44,17 @@ describe('FavoritesService', () => {
       sort: jest.fn().mockReturnThis(),
       exec: jest.fn(),
     });
+    mockFavoriteModel.syncIndexes = jest.fn().mockResolvedValue([]);
+    mockFavoriteModel.collection = {
+      distinct: jest.fn().mockResolvedValue([]),
+      updateMany: jest.fn().mockResolvedValue({ modifiedCount: 0 }),
+    };
+
+    usersService = {
+      findById: jest.fn().mockResolvedValue({ _id: mockUserId }),
+      findOrCreate: jest.fn(),
+    };
+    catalogService = { ensureMovie: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,6 +63,8 @@ describe('FavoritesService', () => {
           provide: getModelToken(Favorite.name),
           useValue: mockFavoriteModel,
         },
+        { provide: UsersService, useValue: usersService },
+        { provide: MovieCatalogService, useValue: catalogService },
       ],
     }).compile();
 
@@ -75,23 +93,43 @@ describe('FavoritesService', () => {
     it('should let different users favorite the same movie', async () => {
       favoriteModel.findOne.mockResolvedValue(null);
 
-      await service.addFavorite('user-a', mockMovieData);
-      await service.addFavorite('user-b', mockMovieData);
+      await service.addFavorite(mockUserId, mockMovieData);
+      await service.addFavorite(otherUserId, mockMovieData);
 
       expect(favoriteModel.findOne).toHaveBeenNthCalledWith(1, {
-        userId: 'user-a',
+        userId: mockUserId,
         imdbID: mockMovieData.imdbID,
       });
       expect(favoriteModel.findOne).toHaveBeenNthCalledWith(2, {
-        userId: 'user-b',
+        userId: otherUserId,
         imdbID: mockMovieData.imdbID,
       });
       expect(favoriteModel).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: 'user-b',
+          userId: otherUserId,
           imdbID: mockMovieData.imdbID,
         }),
       );
+    });
+
+    it('should add the favorited movie to the catalog', async () => {
+      favoriteModel.findOne.mockResolvedValue(null);
+
+      await service.addFavorite(mockUserId, mockMovieData);
+
+      expect(catalogService.ensureMovie).toHaveBeenCalledWith(
+        mockMovieData.imdbID,
+      );
+    });
+
+    it('should throw NotFoundException when the user does not exist', async () => {
+      usersService.findById.mockRejectedValue(new NotFoundException());
+
+      await expect(
+        service.addFavorite(mockUserId, mockMovieData),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(favoriteModel).not.toHaveBeenCalled();
     });
   });
 
@@ -102,6 +140,23 @@ describe('FavoritesService', () => {
       await service.onModuleInit();
 
       expect(favoriteModel.syncIndexes).toHaveBeenCalled();
+    });
+
+    it('should move legacy string userIds to real users', async () => {
+      const guestId = '64f1a2b3c5d6e7f8a9b0c1cc';
+      favoriteModel.collection.distinct.mockResolvedValue(['user-123']);
+      usersService.findOrCreate.mockResolvedValue({
+        _id: guestId,
+        username: 'guest',
+      });
+
+      await service.onModuleInit();
+
+      expect(usersService.findOrCreate).toHaveBeenCalledWith('guest', 'Guest');
+      expect(favoriteModel.collection.updateMany).toHaveBeenCalledWith(
+        { userId: 'user-123' },
+        { $set: { userId: guestId } },
+      );
     });
 
     it('should not throw when syncing indexes fails', async () => {
@@ -159,6 +214,15 @@ describe('FavoritesService', () => {
       const result = await service.getUserFavorites(mockUserId);
 
       expect(result).toEqual([]);
+    });
+
+    it('should throw NotFoundException when the user does not exist', async () => {
+      usersService.findById.mockRejectedValue(new NotFoundException());
+
+      await expect(service.getUserFavorites(mockUserId)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(favoriteModel.find).not.toHaveBeenCalled();
     });
   });
 

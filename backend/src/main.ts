@@ -22,6 +22,8 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('Movies', 'Endpoints for searching movies')
     .addTag('Favorites', 'Endpoints for managing favorite movies')
+    .addTag('Users', 'Endpoints for managing users')
+    .addTag('Catalog', 'Movies available to the recommendations')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

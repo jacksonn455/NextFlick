@@ -8,6 +8,9 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Favorite, FavoriteDocument } from '../entities/favorite.entity';
+import { UsersService } from '../../users/services/users.service';
+import { MovieCatalogService } from '../../movies/services/movie-catalog.service';
+import { DEMO_USERS, LEGACY_USER_IDS } from '../../users/data/demo-users';
 
 @Injectable()
 export class FavoritesService implements OnModuleInit {
@@ -16,11 +19,15 @@ export class FavoritesService implements OnModuleInit {
   constructor(
     @InjectModel(Favorite.name)
     private readonly favoriteModel: Model<FavoriteDocument>,
+    private readonly usersService: UsersService,
+    private readonly catalogService: MovieCatalogService,
   ) {}
 
-  // Mongo never drops indexes on its own; this removes the old unique "imdbID_1"
-  // index, which blocked two users from favoriting the same movie
   async onModuleInit(): Promise<void> {
+    await this.migrateLegacyUserIds();
+
+    // Mongo never drops indexes on its own; this removes the old unique "imdbID_1"
+    // index, which blocked two users from favoriting the same movie
     try {
       const dropped = await this.favoriteModel.syncIndexes();
       if (dropped.length) {
@@ -33,6 +40,37 @@ export class FavoritesService implements OnModuleInit {
     }
   }
 
+  // Favorites saved before the users collection have a free-text userId
+  // ("user-123"); point each of them to a real user document
+  private async migrateLegacyUserIds(): Promise<void> {
+    try {
+      // Raw collection calls: Mongoose would try to cast these strings to ObjectId
+      const legacyIds: string[] = await this.favoriteModel.collection.distinct(
+        'userId',
+        { userId: { $type: 'string' } },
+      );
+
+      for (const legacyId of legacyIds) {
+        const username = LEGACY_USER_IDS[legacyId] ?? legacyId.toLowerCase();
+        const name =
+          DEMO_USERS.find((demo) => demo.username === username)?.name ??
+          username;
+        const user = await this.usersService.findOrCreate(username, name);
+
+        const { modifiedCount } =
+          await this.favoriteModel.collection.updateMany(
+            { userId: legacyId },
+            { $set: { userId: user._id } },
+          );
+        this.logger.log(
+          `Moved ${modifiedCount} favorites from "${legacyId}" to user ${user.username}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(`Could not migrate legacy favorites: ${error.message}`);
+    }
+  }
+
   async addFavorite(
     userId: string,
     movieData: {
@@ -42,6 +80,8 @@ export class FavoritesService implements OnModuleInit {
       poster?: string;
     },
   ): Promise<Favorite> {
+    await this.usersService.findById(userId);
+
     try {
       const existingFavorite = await this.favoriteModel.findOne({
         userId,
@@ -62,6 +102,8 @@ export class FavoritesService implements OnModuleInit {
       });
 
       const savedFavorite = await favorite.save();
+      // Not awaited: fetching OMDb details must not slow down favoriting
+      void this.catalogService.ensureMovie(movieData.imdbID);
       this.logger.log(
         `Movie ${movieData.imdbID} added to favorites for user ${userId}`,
       );
@@ -76,6 +118,8 @@ export class FavoritesService implements OnModuleInit {
   }
 
   async removeFavorite(userId: string, imdbID: string): Promise<void> {
+    await this.usersService.findById(userId);
+
     const result = await this.favoriteModel.deleteOne({ userId, imdbID });
 
     if (result.deletedCount === 0) {
@@ -88,6 +132,8 @@ export class FavoritesService implements OnModuleInit {
   }
 
   async getUserFavorites(userId: string): Promise<Favorite[]> {
+    await this.usersService.findById(userId);
+
     const favorites = await this.favoriteModel
       .find({ userId })
       .sort({ createdAt: -1 })
@@ -98,6 +144,8 @@ export class FavoritesService implements OnModuleInit {
   }
 
   async getFavoriteById(userId: string, imdbID: string): Promise<Favorite> {
+    await this.usersService.findById(userId);
+
     const favorite = await this.favoriteModel.findOne({
       userId,
       imdbID,

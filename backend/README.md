@@ -157,15 +157,60 @@ Returns the full details of a movie (plot, genre, rating, cast, etc.) from the O
 | `400 Bad Request` | IMDb ID is not in the `tt1234567` format |
 | `404 Not Found` | No movie with that IMDb ID (`MOVIE_NOT_FOUND`) |
 
+### Movie Catalog (`GET /catalog`)
+
+The `movies` collection holds the movies the recommendations can use, with the OMDb data already parsed into features (`genres`, `rating`, `runtime`, `year`, `rated`, `type`, `director`, `languages`, `countries`).
+
+-   **Seed**: on startup the API upserts the movies of [`seed-movies.ts`](src/modules/movies/data/seed-movies.ts) (`source: "seed"`). The file already contains the OMDb data, so startup makes no OMDb calls.
+-   **Favorites**: when a user favorites a movie that is not in the catalog yet, its details are fetched and it is added with `source: "favorite"`. This never makes favoriting fail.
+
+| Query | Required | Description |
+| :---- | :------- | :---------- |
+| `genre` | No | Only movies with this genre, e.g. `Drama` |
+| `limit` | No | Maximum number of movies |
+
+#### Rebuilding the seed
+
+[`scripts/build-movie-seed.mjs`](scripts/build-movie-seed.mjs) holds the list of titles. With the API running, it calls `GET /movies/search` and `GET /movies/:imdbID` for each one (the OMDb key stays in the API and every response goes through the Redis cache) and rewrites `seed-movies.ts`:
+
+```bash
+npm run start:dev                                          # in one terminal
+npm run seed:movies:build                                  # API on http://localhost:3000
+API_URL=http://localhost:3005 npm run seed:movies:build    # or another URL
+```
+
+Each run makes about 2 OMDb calls per title on a cold cache (the free key allows 1000 a day). The script skips shorts and clips that share a title, and lists the titles it could not resolve.
+
+### Users (`/users`)
+
+Users live in the `users` collection (`username` is unique, `name` is the display name). There is no sign-up or authentication yet.
+
+| Method | URL | Description |
+| :----- | :-- | :---------- |
+| `GET` | `/users` | All users, oldest first |
+| `GET` | `/users/:id` | One user (`404` when not found) |
+| `POST` | `/users` | Body `{ "username": "ana-lima", "name": "Ana Lima" }`. `400` for an invalid username (3-30 lowercase letters, numbers or `-`), `409` when it is taken |
+
+#### Demo users and favorites
+
+[`demo-users.ts`](src/modules/users/data/demo-users.ts) lists the demo users created on startup: Guest (no favorites, for manual testing) and 16 users with a clear taste (horror, animation, drama, action, sci-fi, crime, comedy, war, romance, fantasy, musicals, TV series, Brazilian and world cinema, action and sci-fi, thrillers, classics), each with 10-12 favorites from the movie catalog.
+
+On startup the API creates the missing demo users and saves the profile favorites of every demo user who has **no** favorites yet. Restarting never duplicates favorites nor brings back the ones a user removed. These users give the recommendation model distinct tastes to learn from; create more users (`POST /users` or the "+" button in the frontend) to test the recommendations by hand.
+
 ### Favorites (`/favorites`)
 
-`POST /favorites`, `GET /favorites`, `GET /favorites/:imdbID` and `DELETE /favorites/:imdbID` act on the favorites of one user. There is no authentication yet: the user is read from the `x-user-id` header.
+`POST /favorites`, `GET /favorites`, `GET /favorites/:imdbID` and `DELETE /favorites/:imdbID` act on the favorites of the user sent in the `x-user-id` header. Each favorite references its user (`userId` is an `ObjectId` with `ref: 'User'`).
 
 | Header | Required | Description |
 | :----- | :------- | :---------- |
-| `x-user-id` | No | 1-50 letters, numbers, `-` or `_`. Defaults to `user-123` when missing. Invalid values return `400 Bad Request`. |
+| `x-user-id` | Yes | The user's `_id` from `GET /users`. Missing or malformed values return `400 Bad Request`; an id with no user returns `404 Not Found`. |
 
-Different users can favorite the same movie; the same user cannot add a movie twice (`409 Conflict`). On startup the service syncs the collection indexes, which drops the old unique `imdbID_1` index from databases created before multi-user support.
+Different users can favorite the same movie; the same user cannot add a movie twice (`409 Conflict`).
+
+On startup the favorites service also:
+
+- moves favorites saved before the users collection (free-text `userId` such as `user-123`) to a real user; `user-123` becomes Guest;
+- syncs the collection indexes, which drops the old unique `imdbID_1` index.
 
 ## Development Scripts
 
@@ -181,6 +226,9 @@ npm npm test:movies
 # Code Quality
 npm run lint
 npm run format
+
+# Movie catalog seed (needs the API running)
+npm run seed:movies:build
 ```
 ## Author
 

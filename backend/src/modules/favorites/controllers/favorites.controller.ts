@@ -22,7 +22,6 @@ import { AddFavoriteDto } from '../dtos/add-favorite.dto';
 import { FavoriteResponseDto } from '../dtos/favorite-response.dto';
 import { FavoritesListResponseDto } from '../dtos/favorites-list-response.dto';
 import {
-  DEFAULT_USER_ID,
   USER_ID_HEADER,
   UserId,
 } from '../../../common/decorators/user-id.decorator';
@@ -30,9 +29,17 @@ import {
 @ApiTags('Favorites')
 @ApiHeader({
   name: USER_ID_HEADER,
-  required: false,
-  description: `User the favorites belong to (defaults to "${DEFAULT_USER_ID}")`,
-  example: DEFAULT_USER_ID,
+  required: true,
+  description: 'Id of the user the favorites belong to (see GET /users)',
+  example: '6728f0c2a1b2c3d4e5f60718',
+})
+@ApiResponse({
+  status: HttpStatus.BAD_REQUEST,
+  description: 'Missing or malformed x-user-id header',
+})
+@ApiResponse({
+  status: HttpStatus.NOT_FOUND,
+  description: 'User not found',
 })
 @Controller('favorites')
 export class FavoritesController {

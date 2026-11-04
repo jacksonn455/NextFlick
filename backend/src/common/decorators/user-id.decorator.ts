@@ -6,22 +6,21 @@ import {
 import type { Request } from 'express';
 
 export const USER_ID_HEADER = 'x-user-id';
-// Used when no header is sent, so clients that don't pick a user keep working
-export const DEFAULT_USER_ID = 'user-123';
 
-const USER_ID_PATTERN = /^[A-Za-z0-9_-]{1,50}$/;
+const OBJECT_ID_PATTERN = /^[a-f0-9]{24}$/i;
 
-// There is no auth yet: the user is whoever the client says it is in the header
+// There is no auth yet: the user is whoever the client says it is in the header.
+// Whether that user exists is checked by the service (404 when it doesn't).
 export function resolveUserId(header: string | string[] | undefined): string {
   const value = (Array.isArray(header) ? header[0] : header)?.trim();
 
   if (!value) {
-    return DEFAULT_USER_ID;
+    throw new BadRequestException(`The ${USER_ID_HEADER} header is required`);
   }
 
-  if (!USER_ID_PATTERN.test(value)) {
+  if (!OBJECT_ID_PATTERN.test(value)) {
     throw new BadRequestException(
-      `Invalid ${USER_ID_HEADER} header: use 1-50 letters, numbers, "-" or "_"`,
+      `Invalid ${USER_ID_HEADER} header: expected a user id (24 hex characters)`,
     );
   }
 

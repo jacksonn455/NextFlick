@@ -1,13 +1,16 @@
 //
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { User } from '../../users/entities/user.entity';
 
 export type FavoriteDocument = Favorite & Document;
 
 @Schema({ timestamps: true })
 export class Favorite {
-  @Prop({ required: true })
-  userId: string;
+  // Schema.Types.ObjectId, not Types.ObjectId: the latter makes the path Mixed,
+  // which stores the header string as-is instead of casting it to an ObjectId
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: User.name, required: true })
+  userId: Types.ObjectId;
 
   // Not unique on its own: many users can favorite the same movie (see compound index below)
   @Prop({ required: true })
