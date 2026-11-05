@@ -7,6 +7,7 @@ import { UsersModule } from './modules/users/modules/users.module';
 import moviesConfig from './config/movies/movies.config';
 import { CommonModule } from './common/common.module';
 import { RedisModule } from './config/redis/redis.module';
+import { RecommendationsModule } from './modules/recommendations/modules/recommendations.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { RedisModule } from './config/redis/redis.module';
     MoviesModule,
     UsersModule,
     FavoritesModule,
+    RecommendationsModule,
   ],
 })
 export class AppModule {}

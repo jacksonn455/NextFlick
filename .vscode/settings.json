@@ -1,0 +1,13 @@
+{
+  // On save, apply ESLint fixes with each project's own config:
+  // backend/eslint.config.mjs (includes Prettier via backend/.prettierrc)
+  // and frontend/eslint.config.mjs (Next.js rules)
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  // The Prettier extension would format the frontend with its defaults
+  // (double quotes, 80 columns), which differs from the code style here
+  "editor.formatOnSave": false,
+  // backend/ and frontend/ each have their own eslint.config.mjs and node_modules
+  "eslint.workingDirectories": [{ "mode": "auto" }]
+}
