@@ -103,6 +103,17 @@ frontend/
 - Data persistence in MongoDB
 - Intelligent caching with React Query
 
+### Users
+- User switcher in the navbar, with the users from `GET /users`
+- "+" button to create a user, selected right away
+- Each user has their own My List (`x-user-id` header)
+
+### Recommendations
+- "Find your next favorite" prompt below My List, with a **Recommend movies & series** button
+- With 3 or more titles in My List, the "Recommended for you" row appears without a click and updates on every new favorite
+- Each recommended title shows its match (the model's score), e.g. "92% match"
+- While the model trains, popular titles are shown and the row refreshes until the personalized ones arrive
+
 ### Modern Design
 - Glassmorphism and backdrop blur
 - Animated gradients

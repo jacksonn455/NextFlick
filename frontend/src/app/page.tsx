@@ -3,6 +3,7 @@
 
 import Hero from './components/Hero';
 import MovieRow from './components/MovieRow';
+import RecommendationsSection from './components/RecommendationsSection';
 import { useFavorites } from './hooks/useFavorites';
 import { useMovies } from './hooks/useMovies';
 import { favoriteToMovie } from './types/movie';
@@ -39,6 +40,7 @@ export default function Home() {
       <Hero imdbID={FEATURED_IMDB_ID} />
       <div className={styles.rows}>
         <MyListRow />
+        <RecommendationsSection />
         {CATALOG_ROWS.map((row) => (
           <CatalogRow key={row.query} {...row} />
         ))}

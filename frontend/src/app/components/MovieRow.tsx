@@ -1,7 +1,7 @@
 // frontend/app/components/MovieRow.tsx
 'use client';
 
-import { useRef } from 'react';
+import { ReactNode, useRef } from 'react';
 import { Movie } from '../types/movie';
 import { ChevronLeftIcon, ChevronRightIcon } from './Icons';
 import MovieCard, { MovieCardSkeleton } from './MovieCard';
@@ -11,11 +11,15 @@ interface MovieRowProps {
   title: string;
   movies?: Movie[];
   isLoading?: boolean;
+  // Small line under the title
+  subtitle?: ReactNode;
+  // imdbID -> label shown on that card's poster
+  badges?: Record<string, string>;
 }
 
 const SKELETON_COUNT = 8;
 
-export default function MovieRow({ title, movies, isLoading = false }: MovieRowProps) {
+export default function MovieRow({ title, movies, isLoading = false, subtitle, badges }: MovieRowProps) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 1 | -1) => {
@@ -29,6 +33,7 @@ export default function MovieRow({ title, movies, isLoading = false }: MovieRowP
   return (
     <section className={styles.row} aria-label={title}>
       <h2 className={styles.title}>{title}</h2>
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
       <div className={styles.viewport}>
         <button
           type="button"
@@ -48,7 +53,7 @@ export default function MovieRow({ title, movies, isLoading = false }: MovieRowP
               ))
             : movies!.map((movie) => (
                 <div key={movie.imdbID} className={styles.item}>
-                  <MovieCard movie={movie} />
+                  <MovieCard movie={movie} badge={badges?.[movie.imdbID]} />
                 </div>
               ))}
         </div>

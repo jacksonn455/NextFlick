@@ -75,3 +75,10 @@
     display: none;
   }
 }
+
+.subtitle {
+  padding: 0 var(--gutter);
+  margin: -0.25rem 0 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

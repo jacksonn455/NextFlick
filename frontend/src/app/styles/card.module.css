@@ -80,6 +80,21 @@
   letter-spacing: 0.04em;
 }
 
+/* "92% match" on recommended titles; top left, away from the favorite button */
+.match {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
 .favorite {
   position: absolute;
   top: 8px;

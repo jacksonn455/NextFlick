@@ -9,9 +9,11 @@ import styles from '../styles/card.module.css';
 
 interface MovieCardProps {
   movie: Movie;
+  // Short label on the poster, e.g. "92% match"
+  badge?: string;
 }
 
-export default function MovieCard({ movie }: MovieCardProps) {
+export default function MovieCard({ movie, badge }: MovieCardProps) {
   const { openMovie } = useMovieModal();
 
   return (
@@ -23,6 +25,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
         aria-label={`More info about ${movie.Title} (${movie.Year})`}
       >
         <Poster src={movie.Poster} title={movie.Title} />
+        {badge && <span className={styles.match}>{badge}</span>}
         <span className={styles.overlay} aria-hidden="true">
           <span className={styles.title}>{movie.Title}</span>
           <span className={styles.meta}>

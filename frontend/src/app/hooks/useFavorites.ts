@@ -4,6 +4,7 @@ import { api, getErrorMessage } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { userHeaders } from '../lib/user';
 import { useUsers } from './useUsers';
+import { RECOMMENDATIONS_KEY } from './useRecommendations';
 import { Favorite, Movie, ApiResponse } from '../types/movie';
 
 type MutationContext = { previous?: Favorite[] };
@@ -36,6 +37,13 @@ export const useFavorites = () => {
     return { previous };
   };
 
+  // The user vector comes from the current favorites, so recommendations change
+  // with every favorite (no retraining needed)
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: favoritesKey });
+    queryClient.invalidateQueries({ queryKey: [RECOMMENDATIONS_KEY, userId] });
+  };
+
   const rollback = (context: MutationContext | undefined) => {
     queryClient.setQueryData(favoritesKey, context?.previous);
   };
@@ -66,7 +74,7 @@ export const useFavorites = () => {
       showToast(`Couldn't add "${movie.Title}". ${getErrorMessage(error)}`, 'error');
     },
     onSuccess: (_, movie) => showToast(`"${movie.Title}" added to My List`),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: favoritesKey }),
+    onSettled: refresh,
   });
 
   const removeFavorite = useMutation<void, Error, Movie, MutationContext>({
@@ -80,7 +88,7 @@ export const useFavorites = () => {
       showToast(`Couldn't remove "${movie.Title}". ${getErrorMessage(error)}`, 'error');
     },
     onSuccess: (_, movie) => showToast(`"${movie.Title}" removed from My List`),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: favoritesKey }),
+    onSettled: refresh,
   });
 
   const checkIsFavorite = (imdbID: string): boolean => {
