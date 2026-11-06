@@ -15,13 +15,46 @@ NextFlick is a robust and scalable application designed for efficient movie sear
 
 ## Technologies Used
 
--   **NestJS**: A progressive Node.js framework for building efficient, reliable, and scalable server-side applications. It leverages TypeScript and combines elements of OOP, FP, and FRP. NestJS's modular architecture is optimized for domain-driven design, promoting dependency injection and reusability.
--   **Docker**: For containerization, ensuring consistent environments across development and production.
--   **Jest**: A delightful JavaScript Testing Framework with a focus on simplicity, used for unit testing.
--   **MongoDB**: A NoSQL database used for scalable persistence of user favorites.
--   **Redis**: An in-memory data structure store, used as a high-performance cache.
--   **Swagger (OpenAPI)**: For API documentation and interactive testing.
--   **TensorFlow.js**: Trains and runs the recommendation model inside the API (`@tensorflow/tfjs-node` when available, `@tensorflow/tfjs` otherwise).
+### Runtime and services
+
+| Tool | Used for |
+| :--- | :------- |
+| **Node.js 22** | Runtime (`engines` in `package.json`, `.nvmrc` in the repository root) |
+| **TypeScript 5** | Language |
+| **MongoDB** (Atlas in production) | Users, favorites and the movie catalog |
+| **Redis** ([Upstash](https://upstash.com), REST) | Cache for OMDb responses; falls back to an in-memory cache when the Upstash variables are not set |
+| **[OMDb API](https://www.omdbapi.com)** | Movie and series data |
+| **Render** | Hosting (`render.yaml` in the repository root) |
+
+### Dependencies
+
+| Library | Version | Used for |
+| :------ | :------ | :------- |
+| `@nestjs/core`, `@nestjs/common`, `@nestjs/platform-express` | ^11 | NestJS framework on Express: modules, controllers, dependency injection, `ValidationPipe` |
+| `@nestjs/config` | ^4 | Environment variables (`ConfigModule`, `movies.config.ts`) |
+| `dotenv` | ^17 | Loads `.env` in `main.ts` |
+| `@nestjs/mongoose`, `mongoose` | ^11 / ^8 | MongoDB schemas and models (`entities/`) |
+| `@nestjs/axios`, `rxjs` | ^4 / ^7 | HTTP calls to the OMDb API |
+| `@nestjs/cache-manager`, `cache-manager` | ^3 / ^7 | `CACHE_MANAGER` contract and in-memory fallback cache |
+| `@upstash/redis` | ^1.41 | Redis client over REST (`config/redis/redis.module.ts`) |
+| `@nestjs/swagger` | ^11 | OpenAPI docs at `/api` |
+| `class-validator`, `class-transformer` | ^0.14 / ^0.5 | DTO validation with the global `ValidationPipe` (e.g. `create-user.dto.ts`) |
+| `@tensorflow/tfjs` | ^4.22 | Recommendation model, pure JavaScript backend |
+| `@tensorflow/tfjs-node` (optional) | ^4.22 | Native TensorFlow backend, used when its binaries install (Linux); see [TensorFlow backend](#tensorflow-backend) |
+| `reflect-metadata` | ^0.2 | Decorator metadata required by NestJS |
+| `amqplib` | ^0.10 | **Not used** in the code (leftover); can be removed |
+
+### Dev dependencies
+
+| Tool | Used for |
+| :--- | :------- |
+| `@nestjs/cli`, `@nestjs/schematics` | Build (`nest build`) and watch mode |
+| `jest`, `ts-jest`, `@nestjs/testing` | Unit tests (`test/src/**/*.spec.ts`) |
+| `supertest`, `@types/supertest` | Configured for e2e tests (`test/jest-e2e.json`); there are no e2e tests yet |
+| `eslint`, `typescript-eslint`, `eslint-plugin-prettier`, `eslint-config-prettier` | Lint (`eslint.config.mjs`), with Prettier rules; fixes on save in VS Code |
+| `prettier` | Formatting (`.prettierrc`) |
+| `ts-node`, `tsconfig-paths`, `ts-loader`, `source-map-support` | TypeScript tooling for debug and build |
+| Docker Compose | `docker-compose.yml` starts a local Redis (`redis:7.2-alpine`), but the API talks to Upstash over REST, so it is not needed to run locally |
 
 ## Architecture & Design Principles
 
@@ -35,7 +68,7 @@ feature (e.g., `movies`, `favorites`) is grouped into a cohesive module. This ap
 
 ### Redis Caching Strategy
 
-Redis is integrated to significantly enhance application performance and reduce external API calls. The caching strategy is designed with the following benefits:
+Redis is integrated to significantly enhance application performance and reduce external API calls. [`redis.module.ts`](src/config/redis/redis.module.ts) exposes [Upstash Redis](https://upstash.com) (REST client `@upstash/redis`) through the `cache-manager` `Cache` contract, so services just inject `CACHE_MANAGER`. Without `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` it falls back to an in-memory cache, and a cache failure is treated as a miss, never breaking a request. The caching strategy is designed with the following benefits:
 
 - **Reduced API Requests**: Caches responses for 24 hours, minimizing calls to the OMDB API.
 - **Improved Performance**: Subsequent requests are served from cache in milliseconds.
@@ -252,15 +285,46 @@ Popularity is still computed: it ranks the popular fallback.
 
 `@tensorflow/tfjs-node` (native, faster) only ships binaries for some platforms: it works on Linux (WSL, Render) but usually not on Windows. [`ml/tf.ts`](src/modules/recommendations/ml/tf.ts) tries it first and falls back to `@tensorflow/tfjs` (pure JavaScript) automatically; `GET /recommendations/status` reports which one loaded in `backend`. With the current data, training takes about 10 seconds with the pure JavaScript backend.
 
+## Getting Started
+
+Prerequisites: Node.js 22, a MongoDB (local or Atlas) and an [OMDb API key](https://www.omdbapi.com/apikey.aspx).
+
+```bash
+cd backend
+npm install
+cp .env.example .env   # then fill in the values
+npm run start:dev
+```
+
+The API runs on `http://localhost:3000` and the Swagger docs on `http://localhost:3000/api`.
+
+### Environment variables
+
+| Variable | Required | Description |
+| :------- | :------- | :---------- |
+| `PORT` | No | Port (default `3000`) |
+| `NODE_ENV` | No | In `production` the `.env` file is ignored |
+| `MONGO_URI` | No | MongoDB connection string (default `mongodb://localhost:27017/NextFlick`) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | No | Upstash Redis; empty uses the in-memory cache |
+| `OMDB_API_KEY` | Yes | OMDb API key |
+| `OMDB_API_URL` | No | OMDb base URL (`http://www.omdbapi.com/`) |
+| `CORS_ORIGIN` | No | Comma-separated allowed origins; empty allows all |
+
 ## Development Scripts
 
 ```bash
 # Development
 npm run start:dev
-npm run start:debug 
+npm run start:debug
+
+# Production
+npm run build
+npm run start:prod
 
 # Testing
 npm test
+npm run test:watch
+npm run test:cov
 npm run test:favorites
 npm run test:movies
 npm run test:recommendations

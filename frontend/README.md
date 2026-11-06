@@ -1,107 +1,111 @@
 # NextFlick - Frontend
 
-A modern movie search and favorites management application, built with Next.js 14+ and React, featuring a design inspired by streaming platforms like Netflix, HBO Max, and Amazon Prime.
+The NextFlick web app: search movies and series, keep a My List per user and get recommendations from the backend's TensorFlow.js model. The design is inspired by streaming platforms (dark theme, hero banner, horizontal rows).
 
 ## Technologies Used
 
-### Core
-- **Next.js 14+** - React framework with App Router
-- **React 18+** - JavaScript library for UI
-- **TypeScript** - Typed superset of JavaScript
+The frontend is intentionally small: Next.js + React for the UI, React Query for server state and Axios for HTTP. Everything else (styles, icons, modal, toasts, user dialog) is written in the project, with no UI or component library.
 
-### State Management & Data Fetching
-- **@tanstack/react-query** (v5) - Server-side state management and caching
-- **Axios** - HTTP client for API requests
+### Dependencies
 
-### Navigation
-- **next/navigation** - Next.js 14 routing system
-- **next/link** - Optimized page navigation
+| Library | Version | Used for |
+| :------ | :------ | :------- |
+| [Next.js](https://nextjs.org) | 16.4.4 | App Router, pages (`/`, `/search`, `/favorites`), `next/font` (Inter), `next/navigation`, `next/link` |
+| [React](https://react.dev) / React DOM | 19.3.1 | UI components, context (`MovieModalContext`, `ToastContext`) |
+| [@tanstack/react-query](https://tanstack.com/query) | ^5.90 | Fetching, caching and mutations for movies, favorites, users and recommendations (`src/app/hooks`) |
+| [Axios](https://axios-http.com) | ^1.12 | HTTP client for the backend API (`src/app/lib/api.ts`), with a 60s timeout because the free Render backend may be waking up |
+
+### Dev dependencies
+
+| Tool | Version | Used for |
+| :--- | :------ | :------- |
+| TypeScript | ^5 | Static typing (`types/` holds the API response types) |
+| ESLint + eslint-config-next | ^9 / 16.4.4 | Lint with the Next.js `core-web-vitals` and `typescript` rules (`npm run lint`, and fix on save in VS Code) |
+| @types/node, @types/react, @types/react-dom | | Type definitions |
+| Tailwind CSS + @tailwindcss/postcss | ^4 | Installed and wired in `postcss.config.mjs`, but **not used**: `globals.css` doesn't import Tailwind and no component uses its classes. Can be removed |
 
 ### Styling
-- **CSS Modules** - Component-scoped styles
-- **CSS Animations** - Custom animations and transitions
-- **Glassmorphism** - Modern glass/blur effects
+
+- **CSS Modules** (`src/app/styles/*.module.css`) for component styles
+- **Global CSS** (`src/app/globals.css`) with the design tokens as CSS variables (`--bg`, `--accent`, `--radius`...)
+- CSS animations and transitions, disabled with `prefers-reduced-motion`
+- Icons are inline SVG components (`components/Icons.tsx`); posters use a plain `<img>`, since OMDb posters come from several CDNs
 
 ## Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
-- Backend API running on `http://localhost:3000`
+- Node.js 22 (see `.nvmrc` in the repository root)
+- npm
+- The [backend](../backend/README.md) running, by default on `http://localhost:3000`
 
-## Installation
+## Getting Started
 
-### 1. Clone the repository
 ```bash
-git clone <repository-url>
 cd frontend
-```
-
-### 2. Install dependencies
-```bash
 npm install
-# or
-yarn install
-```
-
-### 3. Configure environment variables
-Create a `.env.local` file in the project root:
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
-```
-
-### 4. Run the project
-```bash
+cp .env.example .env.local   # then adjust if needed
 npm run dev
-# or
-yarn dev
 ```
 
-The application will be available at `http://localhost:3001`
+The app runs on `http://localhost:3001`.
+
+### Environment variables
+
+| Variable | Default | Description |
+| :------- | :------ | :---------- |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3000` | Backend API base URL |
+
+### Scripts
+
+| Script | Description |
+| :----- | :---------- |
+| `npm run dev` | Development server on port 3001 |
+| `npm run build` | Production build |
+| `npm start` | Serves the production build on port 3001 |
+| `npm run lint` | ESLint |
 
 ## Project Structure
 
 ```
 frontend/
-├── app/
-│   ├── components/          
-│   │   ├── Header.tsx
-│   │   ├── SearchBar.tsx
-│   │   ├── MovieCard.tsx
-│   │   
-│   ├── hooks/              
-│   │   └── useFavorites.ts
-│   ├── types/              
-│   │   └── movie.ts
-│   ├── styles/             
-│   │   ├── search.module.css
-│   │   ├── favorites.module.css
-│   │   └── globals.css
-│   ├── search/             
-│   │   └── page.tsx
-│   ├── favorites/          
-│   │   └── page.tsx
-│   ├── layout.tsx         
-│   └── page.tsx            
-├── public/                
-├── .env.local            
-├── next.config.js        
-├── tsconfig.json         
-└── package.json          
+├── public/                     # Static files
+├── src/app/
+│   ├── components/             # Navbar, Hero, MovieRow, MovieGrid, MovieCard, Poster,
+│   │                           # MovieDetailsModal, FavoriteToggle, SearchBar,
+│   │                           # UserSwitcher, NewUserDialog, RecommendationsSection, Icons
+│   ├── context/                # MovieModalContext (details modal), ToastContext (notifications)
+│   ├── hooks/                  # React Query hooks: useMovies, useFavorites, useUsers, useRecommendations
+│   ├── lib/                    # api.ts (Axios client, error messages, poster URLs), user.ts (selected user)
+│   ├── types/                  # movie.ts, user.ts, recommendation.ts
+│   ├── styles/                 # CSS Modules
+│   ├── search/page.tsx         # /search
+│   ├── favorites/page.tsx      # /favorites (My List)
+│   ├── page.tsx                # / (home)
+│   ├── layout.tsx              # Root layout, Inter font, Navbar
+│   ├── providers.tsx           # QueryClient, toasts and modal providers
+│   ├── globals.css
+│   └── icon.svg                # Favicon
+├── eslint.config.mjs
+├── next.config.ts
+├── postcss.config.mjs
+└── tsconfig.json
 ```
 
 ## Features
 
-### Movie Search
-- Integrated search with OMDb API
-- Modern interface with visual effects
-- Responsive grid results
-- Loading states and error handling
+### Home
+- Featured title in the hero banner
+- My List and catalog rows (e.g. superhero sagas)
 
-### Favorites System
-- Add/remove movies from favorites
-- Real-time synchronization with backend
-- Data persistence in MongoDB
-- Intelligent caching with React Query
+### Movie Search
+- Live search through the backend (`GET /movies/search`, OMDb data cached in Redis)
+- Responsive grid, loading states and friendly error messages
+
+### Movie Details
+- Modal with rating, plot, genre, cast and more (`GET /movies/:imdbID`)
+
+### My List (favorites)
+- Add/remove titles; React Query keeps the lists in sync with the backend
+- Saved in MongoDB per user
 
 ### Users
 - User switcher in the navbar, with the users from `GET /users`
@@ -114,19 +118,12 @@ frontend/
 - Each recommended title shows its match (the model's score), e.g. "92% match"
 - While the model trains, popular titles are shown and the row refreshes until the personalized ones arrive
 
-### Modern Design
-- Glassmorphism and backdrop blur
-- Animated gradients
-- Smooth transitions
-- Responsive design (mobile-first)
-- Support for prefers-reduced-motion
-- Support for high contrast mode
+## Deploy
 
+Deployed on [Vercel](https://vercel.com): https://nextflick-three.vercel.app (`NEXT_PUBLIC_API_URL` points to the Render backend).
 
 ## Author
 
-<img src="https://avatars1.githubusercontent.com/u/46221221?s=460&u=0d161e390cdad66e925f3d52cece6c3e65a23eb2&v=4" width=115>  
+<img src="https://avatars1.githubusercontent.com/u/46221221?s=460&u=0d161e390cdad66e925f3d52cece6c3e65a23eb2&v=4" width=115>
 
 <sub>@jacksonn455</sub>
-
----

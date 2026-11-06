@@ -10,9 +10,9 @@ NextFlick recommends movies and series with a neural network trained with **Tens
 
 Detailed documentation for each part of the project is located in their respective directories:
 
-- **[Backend README](./backend/README.md)** - Contains information about
+- **[Backend README](./backend/README.md)** - NestJS API: technologies and libraries, setup and environment variables, endpoints, Redis cache, MongoDB and the TensorFlow.js recommendation model
 
-- **[Frontend README](./frontend/README.md)** - Contains information about
+- **[Frontend README](./frontend/README.md)** - Next.js app: technologies and libraries, setup, project structure and features
 
 ## Screenshots
 
