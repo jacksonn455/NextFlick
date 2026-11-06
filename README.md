@@ -2,6 +2,10 @@
 
 **Access the project:** https://nextflick-three.vercel.app
 
+## Recommendations
+
+NextFlick recommends movies and series with a neural network trained with **TensorFlow.js** on the users' favorites, inside the API. Add 3 titles to My List (or click **Recommend movies & series**) and the "Recommended for you" row appears below My List. How it works, the endpoints and how the model was evaluated are in the [Backend README](./backend/README.md#recommendations-recommendations).
+
 ## Documentation
 
 Detailed documentation for each part of the project is located in their respective directories:

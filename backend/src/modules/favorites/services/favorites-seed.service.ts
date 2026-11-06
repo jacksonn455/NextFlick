@@ -19,10 +19,19 @@ export class FavoritesSeedService implements OnApplicationBootstrap {
     private readonly catalogService: MovieCatalogService,
   ) {}
 
+  private seeding?: Promise<void>;
+
   // Runs after every onModuleInit, so the demo users and the movie catalog exist.
   // Not awaited: the API starts listening while the seed runs.
   onApplicationBootstrap(): void {
-    void this.seedDemoFavorites();
+    void this.whenSeeded();
+  }
+
+  // Lets the recommendations train only after the demo favorites exist.
+  // Starts the seed if it hasn't started yet, and never runs it twice.
+  whenSeeded(): Promise<void> {
+    this.seeding ??= this.seedDemoFavorites();
+    return this.seeding;
   }
 
   // Only users with no favorites are seeded: restarting never duplicates

@@ -18,6 +18,7 @@
     "test:cov": "jest --coverage",
     "test:favorites": "jest test/src/modules/favorites/services/favorites.service.spec.ts",
     "test:movies": "jest test/src/modules/movies/services/movies.service.spec.ts",
+    "test:recommendations": "jest test/src/modules/recommendations",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:movies:build": "node scripts/build-movie-seed.mjs && prettier --write src/modules/movies/data/seed-movies.ts"
@@ -31,6 +32,7 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
+    "@tensorflow/tfjs": "^4.22.0",
     "@upstash/redis": "^1.41.0",
     "amqplib": "^0.10.9",
     "cache-manager": "^7.2.4",

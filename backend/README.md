@@ -11,6 +11,7 @@ NextFlick is a robust and scalable application designed for efficient movie sear
 -   **Redis Caching**: High-performance caching for movie searches.
 -   **MongoDB**: Scalable persistence for user-favorite movies.
 -   **Swagger Documentation**: Automatic and interactive API documentation.
+-   **Recommendations**: A TensorFlow.js neural network trained on the users' favorites recommends movies and series (see [Recommendations](#recommendations-recommendations)).
 
 ## Technologies Used
 
@@ -20,6 +21,7 @@ NextFlick is a robust and scalable application designed for efficient movie sear
 -   **MongoDB**: A NoSQL database used for scalable persistence of user favorites.
 -   **Redis**: An in-memory data structure store, used as a high-performance cache.
 -   **Swagger (OpenAPI)**: For API documentation and interactive testing.
+-   **TensorFlow.js**: Trains and runs the recommendation model inside the API (`@tensorflow/tfjs-node` when available, `@tensorflow/tfjs` otherwise).
 
 ## Architecture & Design Principles
 
@@ -212,6 +214,44 @@ On startup the favorites service also:
 - moves favorites saved before the users collection (free-text `userId` such as `user-123`) to a real user; `user-123` becomes Guest;
 - syncs the collection indexes, which drops the old unique `imdbID_1` index.
 
+### Recommendations (`/recommendations`)
+
+A neural network trained with TensorFlow.js recommends movies and series from the [catalog](#movie-catalog-get-catalog). It follows the same steps as the e-commerce recommender from the course (`exemplo-01`), with movies in place of products and favorites in place of purchases.
+
+| Endpoint | Description |
+| :------- | :---------- |
+| `GET /recommendations?limit=20` | Recommendations for the user in the `x-user-id` header (required). `limit` goes from 1 to 50 |
+| `GET /recommendations/status` | Training state (`idle`, `training`, `ready`, `failed`), progress and loss/accuracy per epoch |
+| `POST /recommendations/train` | Retrains in the background with the current favorites (`202 Accepted`); the previous model keeps answering until it finishes |
+
+`GET /recommendations` returns `source: "model"` with a `score` (0-1) per title, or `source: "popular"` (most favorited, then best rated) while the model is training or when the user has no favorites.
+
+#### How it works
+
+All the code is in [`src/modules/recommendations`](src/modules/recommendations):
+
+1.  **Features** ([`ml/feature-encoder.ts`](src/modules/recommendations/ml/feature-encoder.ts)): `makeContext` reads the catalog's min/max values and categories; `encodeMovie` turns a movie into a vector of normalized numbers (rating, runtime, year, popularity) and weighted one-hot blocks (genres as multi-hot, type, rated); `encodeUser` is the average of the user's favorite movies. Plain arrays, no tensors, so it is easy to test and leaks no memory.
+2.  **Training data** ([`ml/training-data.ts`](src/modules/recommendations/ml/training-data.ts)): each row is `[...userVector, ...movieVector]` with label `1` for a favorite. Unlike the course example, which pairs every user with every product, only 3 non-favorites per favorite are sampled as `0`, otherwise ~95% of the labels would be 0.
+3.  **Model** ([`ml/model.ts`](src/modules/recommendations/ml/model.ts)): `Dense(128, relu) → Dense(64, relu) → Dense(32, relu) → Dense(1, sigmoid)`, `binaryCrossentropy`, Adam (0.001), 30 epochs, batch 32.
+4.  **Service** ([`services/recommendations.service.ts`](src/modules/recommendations/services/recommendations.service.ts)): trains on startup (after the demo favorites are seeded) and scores every movie the user hasn't favorited. The user vector is built from the current favorites at request time, so new favorites change the recommendations without retraining; new users and new movies enter the model on the next training.
+
+#### Evaluation and tuning
+
+The model was checked by hiding one favorite of each of the 16 demo users, training without it, and counting how often it came back in that user's top 10 (*hit rate@10*). Two changes came out of it:
+
+| Setting | hit rate@10 | Notes |
+| :------ | :---------- | :---- |
+| Popularity weight 0.1, 100 epochs | 2/16 | **Label leakage**: popularity comes from the favorites themselves, so every positive had popularity > 0 and the model learned "popular = favorite" |
+| Popularity weight 0, 100 epochs | 10/16 | Most top scores end at 1.00 (memorized), so the ranking is mostly ties |
+| **Popularity weight 0, 30 epochs** (current) | **10/16** | No saturated scores, trains 3x faster |
+| No model, cosine similarity (baseline) | 9/16 | |
+
+Popularity is still computed: it ranks the popular fallback.
+
+#### TensorFlow backend
+
+`@tensorflow/tfjs-node` (native, faster) only ships binaries for some platforms: it works on Linux (WSL, Render) but usually not on Windows. [`ml/tf.ts`](src/modules/recommendations/ml/tf.ts) tries it first and falls back to `@tensorflow/tfjs` (pure JavaScript) automatically; `GET /recommendations/status` reports which one loaded in `backend`. With the current data, training takes about 10 seconds with the pure JavaScript backend.
+
 ## Development Scripts
 
 ```bash
@@ -220,8 +260,10 @@ npm run start:dev
 npm run start:debug 
 
 # Testing
-npm npm test:favorites
-npm npm test:movies
+npm test
+npm run test:favorites
+npm run test:movies
+npm run test:recommendations
 
 # Code Quality
 npm run lint

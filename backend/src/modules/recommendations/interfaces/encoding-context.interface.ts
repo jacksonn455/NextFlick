@@ -1,3 +1,9 @@
+import { CatalogMovie } from '../../movies/entities/catalog-movie.entity';
+
+export interface FavoritesByUser {
+  [userId: string]: CatalogMovie[];
+}
+
 export interface EncodingContext {
   minRating: number;
   maxRating: number;
@@ -11,5 +17,6 @@ export interface EncodingContext {
   numGenres: number;
   numTypes: number;
   numRated: number;
+  popularity: Record<string, number>;
   dimension: number;
 }

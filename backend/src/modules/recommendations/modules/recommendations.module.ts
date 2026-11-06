@@ -6,9 +6,10 @@ import {
 } from '../../favorites/entities/favorite.entity';
 import { UsersModule } from '../../users/modules/users.module';
 import { MoviesModule } from '../../movies/modules/movies.module';
+import { FavoritesModule } from '../../favorites/modules/favorites.module';
+import { RecommendationsController } from '../controllers/recommendations.controller';
+import { RecommendationsService } from '../services/recommendations.service';
 
-// TODO: add RecommendationsController / RecommendationsService once they exist,
-// then register this module in app.module.ts
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -16,8 +17,9 @@ import { MoviesModule } from '../../movies/modules/movies.module';
     ]),
     UsersModule,
     MoviesModule,
+    FavoritesModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [RecommendationsController],
+  providers: [RecommendationsService],
 })
 export class RecommendationsModule {}
