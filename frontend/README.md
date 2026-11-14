@@ -63,6 +63,10 @@ The app runs on `http://localhost:3001`.
 | `npm start` | Serves the production build on port 3001 |
 | `npm run lint` | ESLint |
 
+### End-to-end tests
+
+The deployed frontend is covered by Playwright tests that live at the repository root (`tests/`), not in this folder. See [End-to-end tests (Playwright)](../README.md#end-to-end-tests-playwright) in the main README.
+
 ## Project Structure
 
 ```

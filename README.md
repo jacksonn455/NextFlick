@@ -14,6 +14,8 @@ Detailed documentation for each part of the project is located in their respecti
 
 - **[Frontend README](./frontend/README.md)** - Next.js app: technologies and libraries, setup, project structure and features
 
+- **[End-to-end tests](#end-to-end-tests-playwright)** - Playwright tests for the deployed app, plus the [prompts](#prompts) used to scaffold and generate them
+
 ## Screenshots
 
 **Home: featured title**
@@ -47,6 +49,53 @@ The project is deployed in the cloud, with each part on its own platform:
 | API docs (Swagger) | Render | https://nextflick-o00k.onrender.com/api |
 
 Supporting services: **MongoDB Atlas** (database), **Upstash Redis** (cache) and **OMDb API** (movie data).
+
+## End-to-end tests (Playwright)
+
+The deployed frontend (https://nextflick-three.vercel.app) is tested with [Playwright](https://playwright.dev) (`@playwright/test`, Chromium only). The setup lives at the repository root, separate from `frontend/` and `backend/`:
+
+```
+package.json            # only dev dependency: @playwright/test
+playwright.config.ts    # baseURL = Vercel deploy, 5s default timeout, chromium project
+tests/
+  home.spec.ts          # app shell: page title, main navigation, going to /search
+  search.spec.ts        # search with results ("matrix") and with no results
+  favorites.spec.ts     # add a title to My List from search, see it on /favorites, remove it
+  new-user.spec.ts      # "New user" dialog validation (name and username rules), cancel / Escape
+.github/workflows/playwright.yml
+```
+
+### Running
+
+```bash
+npm ci
+npx playwright install --with-deps chromium   # on Windows/macOS: npx playwright install chromium
+npm test                                      # headless run
+npm run test:headed                           # watch the browser
+npm run test:report                           # open the last HTML report
+```
+
+### Things to know
+
+- **Backend cold start:** the API runs on Render's free tier and can take ~50s to wake up ("Waking up the server…"). The global timeout stays at 5s for what Vercel serves (page title, navigation); tests that wait for API data raise their own limit with `test.setTimeout(...)` and longer per-assertion timeouts.
+- **Shared production data:** the tests run against the live deploy and its database. A new browser uses the first user (Guest), so `favorites.spec.ts` removes its title before and after running, keeping Guest's list unchanged. The "New user" test never submits the form, so no users are created.
+- **Locators:** tests use roles and accessible names the app already exposes (`navigation "Main"`, `searchbox "Search movies"`, `More info about <Title> (<Year>)`, `Add/Remove <Title> to/from My List`).
+
+### CI
+
+[`.github/workflows/playwright.yml`](./.github/workflows/playwright.yml) runs on pushes and pull requests to `main`: checkout, Node.js from `.nvmrc`, `npm ci`, install Chromium, `npm test`. On failure it uploads the HTML report as the `playwright-report` artifact (kept for 7 days).
+
+## Prompts
+
+The [`prompts/`](./prompts) folder holds the prompts used to build the Playwright tests with an AI agent and the [Playwright MCP](https://github.com/microsoft/playwright-mcp) server (configured in `.mcp.json`):
+
+| File | Purpose |
+|---|---|
+| [`project-scaffolding.md`](./prompts/project-scaffolding.md) | Sets up Playwright from scratch: dependency, config (baseURL, timeouts), first spec and the GitHub Actions workflow |
+| [`generate_test.prompt.md`](./prompts/generate_test.prompt.md) | Rules for the test generator: run each step in the browser through the MCP first, only then write the test, run it until it passes, prefer `getByRole` and keep tests idempotent |
+| [`generate-tests.md`](./prompts/generate-tests.md) | The scenarios to generate: search, search with no results, My List add/remove and the "New user" dialog validation |
+
+To regenerate or extend the tests, give the agent `generate_test.prompt.md` as instructions and `generate-tests.md` (or new scenarios in the same style) as the task.
 
 ## Quick Start
 
