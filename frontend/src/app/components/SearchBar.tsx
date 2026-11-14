@@ -8,9 +8,17 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
+  label?: string;
+  placeholder?: string;
 }
 
-export default function SearchBar({ value, onChange, onSubmit }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChange,
+  onSubmit,
+  label = 'Search movies',
+  placeholder = 'Titles, franchises, characters…',
+}: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
@@ -23,9 +31,9 @@ export default function SearchBar({ value, onChange, onSubmit }: SearchBarProps)
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Titles, franchises, characters…"
+        placeholder={placeholder}
         className={styles.searchInput}
-        aria-label="Search movies"
+        aria-label={label}
         autoComplete="off"
         autoFocus
       />

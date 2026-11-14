@@ -25,6 +25,8 @@ async function bootstrap() {
     .addTag('Users', 'Endpoints for managing users')
     .addTag('Catalog', 'Movies available to the recommendations')
     .addTag('Recommendations', 'Endpoints for making movie recommendations')
+    .addTag('Free Movies', 'Public domain movies from the Internet Archive')
+    .addTag('Watch History', 'Playback progress and Continue Watching')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

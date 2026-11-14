@@ -8,6 +8,7 @@ import moviesConfig from './config/movies/movies.config';
 import { CommonModule } from './common/common.module';
 import { RedisModule } from './config/redis/redis.module';
 import { RecommendationsModule } from './modules/recommendations/modules/recommendations.module';
+import { StreamingModule } from './modules/streaming/modules/streaming.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RecommendationsModule } from './modules/recommendations/modules/recomme
     UsersModule,
     FavoritesModule,
     RecommendationsModule,
+    StreamingModule,
   ],
 })
 export class AppModule {}

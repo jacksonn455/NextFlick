@@ -2,6 +2,7 @@
 'use client';
 
 import Hero from './components/Hero';
+import { ContinueWatchingRow, FreeToWatchRow } from './components/FreeMovieRow';
 import MovieRow from './components/MovieRow';
 import RecommendationsSection from './components/RecommendationsSection';
 import { useFavorites } from './hooks/useFavorites';
@@ -39,8 +40,10 @@ export default function Home() {
     <>
       <Hero imdbID={FEATURED_IMDB_ID} />
       <div className={styles.rows}>
+        <ContinueWatchingRow />
         <MyListRow />
         <RecommendationsSection />
+        <FreeToWatchRow />
         {CATALOG_ROWS.map((row) => (
           <CatalogRow key={row.query} {...row} />
         ))}
