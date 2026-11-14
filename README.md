@@ -95,6 +95,12 @@ The [`prompts/`](./prompts) folder holds the prompts used to build the Playwrigh
 | [`generate_test.prompt.md`](./prompts/generate_test.prompt.md) | Rules for the test generator: run each step in the browser through the MCP first, only then write the test, run it until it passes, prefer `getByRole` and keep tests idempotent |
 | [`generate-tests.md`](./prompts/generate-tests.md) | The scenarios to generate: search, search with no results, My List add/remove and the "New user" dialog validation |
 
+`.mcp.json` reads the browser extension token from the `PLAYWRIGHT_MCP_EXTENSION_TOKEN` environment variable. Copy `.env.example` to `.env` and paste your token from the Playwright MCP extension. Claude Code does not load `.env` files on its own, so the variable must be set before the editor starts, for example on Windows:
+
+```powershell
+setx PLAYWRIGHT_MCP_EXTENSION_TOKEN "<your token>"   # then restart VS Code / Claude Code
+```
+
 To regenerate or extend the tests, give the agent `generate_test.prompt.md` as instructions and `generate-tests.md` (or new scenarios in the same style) as the task.
 
 ## Quick Start
