@@ -11,6 +11,10 @@ export interface ArchiveSearchDoc {
   description?: ArchiveText;
   creator?: ArchiveText;
   licenseurl?: string;
+  subject?: ArchiveText;
+  // Running time as written on the item ("01:23:45" or "83 min")
+  runtime?: string;
+  publicdate?: string;
 }
 
 export interface ArchiveSearchResponse {
@@ -42,38 +46,18 @@ export interface ArchiveMetadataResponse {
     licenseurl?: string;
     rights?: ArchiveText;
     mediatype?: string;
+    subject?: ArchiveText;
+    runtime?: string;
+    publicdate?: string;
   };
   files?: ArchiveFile[];
   is_dark?: boolean;
 }
 
-// What the API exposes to the frontend
-
-export type LicenseType = 'public-domain' | 'cc0' | 'cc-by' | 'cc-by-sa';
-
-export interface LicenseInfo {
-  type: LicenseType | null;
-  label: string;
-  url: string | null;
-  // True only for licenses that allow streaming the film in this app
-  allowed: boolean;
-}
-
-export interface FreeMovie {
-  identifier: string;
-  title: string;
-  year: string | null;
-  description: string | null;
-  creator: string | null;
-  thumbnail: string;
-  license: LicenseInfo;
-}
-
-export interface FreeMovieDetails extends FreeMovie {
-  videoUrl: string;
-  videoFormat: string;
-  durationSeconds: number | null;
-  sourceUrl: string;
-  attribution: string;
-  rights: string | null;
-}
+// What the API exposes to the frontend: the normalized model shared by all sources
+export type {
+  FreeMovie,
+  FreeMovieDetails,
+  LicenseInfo,
+  LicenseType,
+} from './free-movie.interface';

@@ -244,3 +244,148 @@
   margin: 0 0 1.5rem;
   color: var(--text-muted);
 }
+
+/* Multi-source catalog: badges, skeletons and embedded players */
+
+.publicBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sourceBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.75);
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.cardSkeleton,
+.playerLoading,
+.skeletonTitle,
+.skeletonLine {
+  background: var(--surface-2);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.cardSkeleton {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardSkeleton,
+  .playerLoading,
+  .skeletonTitle,
+  .skeletonLine {
+    animation: none;
+  }
+}
+
+.skeletonTitle {
+  height: 40px;
+  width: min(420px, 80%);
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonLine {
+  height: 16px;
+  width: min(640px, 100%);
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+}
+
+.player iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.playerLoading {
+  position: absolute;
+  inset: 0;
+}
+
+.player.playerLoading {
+  position: relative;
+}
+
+.playerWrap {
+  margin-bottom: 24px;
+}
+
+.playerWrap .player {
+  margin-bottom: 8px;
+}
+
+.embedHelp {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.embedHelp a {
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.detailsWide {
+  grid-column: 1 / -1;
+}
+
+.sourceTag,
+.publicTag {
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sourceTag {
+  color: var(--text);
+}
+
+.publicTag {
+  color: var(--text-muted);
+}
+
+.inlineLink {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.moreRow {
+  margin: 48px calc(-1 * var(--gutter)) 0;
+}
+
+/* Cards already show the title below; keep only the icon on missing artwork */
+.card > div:first-child span {
+  display: none;
+}

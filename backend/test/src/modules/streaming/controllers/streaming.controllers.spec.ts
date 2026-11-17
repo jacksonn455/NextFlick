@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { FreeMoviesController } from '../../../../../src/modules/streaming/controllers/free-movies.controller';
 import { WatchHistoryController } from '../../../../../src/modules/streaming/controllers/watch-history.controller';
-import { FreeMoviesService } from '../../../../../src/modules/streaming/services/free-movies.service';
+import { FreeCatalogService } from '../../../../../src/modules/streaming/services/free-catalog.service';
 import { WatchHistoryService } from '../../../../../src/modules/streaming/services/watch-history.service';
 import {
   ArchiveUnavailableException,
@@ -16,7 +16,12 @@ const userId = '64f1a2b3c5d6e7f8a9b0c1aa';
 // HTTP layer of the streaming module, with the services mocked
 describe('Streaming controllers (integration)', () => {
   let app: INestApplication;
-  let freeMovies: { search: jest.Mock; getMovie: jest.Mock };
+  let freeMovies: {
+    search: jest.Mock;
+    getMovie: jest.Mock;
+    getSources: jest.Mock;
+    getGenres: jest.Mock;
+  };
   let history: {
     getHistory: jest.Mock;
     getEntry: jest.Mock;
@@ -25,7 +30,12 @@ describe('Streaming controllers (integration)', () => {
   };
 
   beforeAll(async () => {
-    freeMovies = { search: jest.fn(), getMovie: jest.fn() };
+    freeMovies = {
+      search: jest.fn(),
+      getMovie: jest.fn(),
+      getSources: jest.fn(),
+      getGenres: jest.fn(),
+    };
     history = {
       getHistory: jest.fn(),
       getEntry: jest.fn(),
@@ -36,7 +46,7 @@ describe('Streaming controllers (integration)', () => {
     const module = await Test.createTestingModule({
       controllers: [FreeMoviesController, WatchHistoryController],
       providers: [
-        { provide: FreeMoviesService, useValue: freeMovies },
+        { provide: FreeCatalogService, useValue: freeMovies },
         { provide: WatchHistoryService, useValue: history },
       ],
     }).compile();
@@ -53,7 +63,10 @@ describe('Streaming controllers (integration)', () => {
 
   describe('GET /free-movies', () => {
     it('lists free movies with the query and limit', async () => {
-      freeMovies.search.mockResolvedValue([{ identifier: 'nosferatu' }]);
+      freeMovies.search.mockResolvedValue({
+        movies: [{ identifier: 'nosferatu' }],
+        unavailableSources: ['youtube'],
+      });
 
       const res = await request(app.getHttpServer())
         .get('/free-movies?q=nosferatu&limit=5')
@@ -63,11 +76,54 @@ describe('Streaming controllers (integration)', () => {
         success: true,
         data: [{ identifier: 'nosferatu' }],
         count: 1,
+        unavailableSources: ['youtube'],
       });
+      expect(freeMovies.search).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: 'nosferatu',
+          limit: 5,
+          freeOnly: true,
+          sources: undefined,
+        }),
+      );
+    });
+
+    it('passes the filters to the catalog', async () => {
+      freeMovies.search.mockResolvedValue({
+        movies: [],
+        unavailableSources: [],
+      });
+
+      await request(app.getHttpServer())
+        .get(
+          '/free-movies?sources=youtube,peertube,bogus&genre=Western&yearFrom=1920&yearTo=1959&contentType=feature&free=all&page=2',
+        )
+        .expect(200);
+
       expect(freeMovies.search).toHaveBeenCalledWith({
-        query: 'nosferatu',
-        limit: 5,
+        query: undefined,
+        limit: undefined,
+        page: 2,
+        sources: ['youtube', 'peertube'],
+        genre: 'Western',
+        yearFrom: 1920,
+        yearTo: 1959,
+        contentType: 'feature',
+        freeOnly: false,
       });
+    });
+
+    it('ignores an unknown content type', async () => {
+      freeMovies.search.mockResolvedValue({
+        movies: [],
+        unavailableSources: [],
+      });
+
+      await request(app.getHttpServer())
+        .get('/free-movies?contentType=nonsense')
+        .expect(200);
+
+      expect(freeMovies.search.mock.calls[0][0].contentType).toBeUndefined();
     });
 
     it('rejects a non-numeric limit', async () => {
@@ -88,6 +144,28 @@ describe('Streaming controllers (integration)', () => {
     });
   });
 
+  describe('GET /free-movies/sources', () => {
+    it('lists the sources and genres (not read as a film id)', async () => {
+      freeMovies.getSources.mockReturnValue([
+        {
+          source: 'youtube',
+          label: 'YouTube',
+          enabled: false,
+          available: false,
+        },
+      ]);
+      freeMovies.getGenres.mockReturnValue(['Western']);
+
+      const res = await request(app.getHttpServer())
+        .get('/free-movies/sources')
+        .expect(200);
+
+      expect(res.body.data.genres).toEqual(['Western']);
+      expect(res.body.data.sources[0].source).toBe('youtube');
+      expect(freeMovies.getMovie).not.toHaveBeenCalled();
+    });
+  });
+
   describe('GET /free-movies/:identifier', () => {
     it('returns the movie', async () => {
       freeMovies.getMovie.mockResolvedValue({ identifier: 'nosferatu' });
@@ -95,6 +173,18 @@ describe('Streaming controllers (integration)', () => {
       await request(app.getHttpServer())
         .get('/free-movies/nosferatu')
         .expect(200, { success: true, data: { identifier: 'nosferatu' } });
+    });
+
+    it('accepts prefixed ids of the other sources', async () => {
+      freeMovies.getMovie.mockResolvedValue({
+        identifier: 'youtube:abcdefghijk',
+      });
+
+      await request(app.getHttpServer())
+        .get('/free-movies/youtube%3Aabcdefghijk')
+        .expect(200);
+
+      expect(freeMovies.getMovie).toHaveBeenCalledWith('youtube:abcdefghijk');
     });
 
     it('answers 403 for films that may not be streamed', async () => {

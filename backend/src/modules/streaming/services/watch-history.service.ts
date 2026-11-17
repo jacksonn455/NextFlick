@@ -6,13 +6,13 @@ import {
   WatchHistoryDocument,
 } from '../entities/watch-history.entity';
 import { UsersService } from '../../users/services/users.service';
-import { FreeMoviesService } from './free-movies.service';
+import { FreeCatalogService } from './free-catalog.service';
 import { SaveProgressDto } from '../dtos/save-progress.dto';
 import {
-  InvalidArchiveIdentifierException,
+  InvalidMovieIdentifierException,
   WatchHistoryNotFoundException,
 } from '../exceptions/streaming.exceptions';
-import { isValidIdentifier } from '../utils/archive.parser';
+import { isValidMovieId } from '../utils/movie-id';
 
 // From this share of the film on, it counts as watched (end credits are often skipped)
 export const COMPLETED_RATIO = 0.95;
@@ -26,7 +26,7 @@ export class WatchHistoryService {
     @InjectModel(WatchHistory.name)
     private readonly historyModel: Model<WatchHistoryDocument>,
     private readonly usersService: UsersService,
-    private readonly freeMoviesService: FreeMoviesService,
+    private readonly catalog: FreeCatalogService,
   ) {}
 
   async saveProgress(
@@ -36,7 +36,7 @@ export class WatchHistoryService {
   ): Promise<WatchHistory> {
     await this.usersService.findById(userId);
     // Also checks that the film exists and may be streamed (cached)
-    const movie = await this.freeMoviesService.getMovie(identifier);
+    const movie = await this.catalog.getMovie(identifier);
 
     const safePosition = duration > 0 ? Math.min(position, duration) : position;
     const completed =
@@ -109,8 +109,8 @@ export class WatchHistoryService {
   }
 
   private assertIdentifier(identifier: string) {
-    if (!isValidIdentifier(identifier)) {
-      throw new InvalidArchiveIdentifierException();
+    if (!isValidMovieId(identifier)) {
+      throw new InvalidMovieIdentifierException();
     }
   }
 }

@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRef } from 'react';
 import { useFreeMovies } from '../hooks/useFreeMovies';
 import { useContinueWatching } from '../hooks/useWatchHistory';
+import { FreeMovie } from '../types/freeMovie';
 import { ChevronLeftIcon, ChevronRightIcon } from './Icons';
 import FreeMovieCard, { FreeMovieCardData } from './FreeMovieCard';
-import { MovieCardSkeleton } from './MovieCard';
 import rowStyles from '../styles/row.module.css';
 import styles from '../styles/free.module.css';
 
@@ -21,8 +21,18 @@ interface FreeMovieRowProps {
 
 const SKELETON_COUNT = 6;
 
+export const toCardData = (movie: FreeMovie): FreeMovieCardData => ({
+  identifier: movie.identifier,
+  title: movie.title,
+  thumbnail: movie.thumbnail,
+  year: movie.year,
+  source: movie.source,
+  durationSeconds: movie.durationSeconds,
+  freeToWatch: movie.freeToWatch,
+});
+
 // Same layout as MovieRow, with landscape cards that link to the watch page
-function FreeMovieRow({ title, testId, items, isLoading = false, subtitle }: FreeMovieRowProps) {
+export function FreeMovieRow({ title, testId, items, isLoading = false, subtitle }: FreeMovieRowProps) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 1 | -1) => {
@@ -51,7 +61,7 @@ function FreeMovieRow({ title, testId, items, isLoading = false, subtitle }: Fre
           {isLoading
             ? Array.from({ length: SKELETON_COUNT }, (_, i) => (
                 <div key={i} className={styles.item}>
-                  <MovieCardSkeleton />
+                  <div className={styles.cardSkeleton} />
                 </div>
               ))
             : items!.map((item) => (
@@ -77,7 +87,7 @@ function FreeMovieRow({ title, testId, items, isLoading = false, subtitle }: Fre
 export function FreeToWatchRow() {
   const { data, isLoading, error } = useFreeMovies();
 
-  // The rest of the home page keeps working if the Internet Archive is down
+  // The rest of the home page keeps working if the free sources are down
   if (error) {
     return (
       <section className={rowStyles.row} aria-label="Free to Watch" data-testid="free-to-watch">
@@ -96,15 +106,11 @@ export function FreeToWatchRow() {
       isLoading={isLoading}
       subtitle={
         <>
-          Public domain classics from the Internet Archive. <Link href="/free">See all</Link>
+          Public domain and openly licensed films from the Internet Archive, the Library of Congress, PeerTube and
+          more. <Link href="/watch">See all</Link>
         </>
       }
-      items={data?.map((movie) => ({
-        identifier: movie.identifier,
-        title: movie.title,
-        thumbnail: movie.thumbnail,
-        year: movie.year,
-      }))}
+      items={data?.map(toCardData)}
     />
   );
 }

@@ -309,6 +309,11 @@ The API runs on `http://localhost:3000` and the Swagger docs on `http://localhos
 | `OMDB_API_KEY` | Yes | OMDb API key |
 | `OMDB_API_URL` | No | OMDb base URL (`http://www.omdbapi.com/`) |
 | `CORS_ORIGIN` | No | Comma-separated allowed origins; empty allows all |
+| `ARCHIVE_BASE_URL`, `ARCHIVE_COLLECTION` | No | Internet Archive source (defaults work) |
+| `YOUTUBE_API_KEY` | No | YouTube Data API v3 key; empty disables the YouTube source (only Creative Commons full-length films are listed, at most 80 searches/day) |
+| `PEERTUBE_INSTANCES` | No | Comma-separated HTTPS PeerTube instances or search indexes (default `https://sepiasearch.org`); empty disables PeerTube |
+
+Free movies (`GET /free-movies`) come from the Internet Archive, the Library of Congress National Screening Room, PeerTube and YouTube. Every source is cached (6–24 h), searched in parallel and skipped for a while after repeated failures; a source slower than 9 s is left out of that response and fills the cache for the next one.
 
 ## Development Scripts
 

@@ -2,11 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { WatchHistoryService } from '../../../../../src/modules/streaming/services/watch-history.service';
-import { FreeMoviesService } from '../../../../../src/modules/streaming/services/free-movies.service';
+import { FreeCatalogService } from '../../../../../src/modules/streaming/services/free-catalog.service';
 import { WatchHistory } from '../../../../../src/modules/streaming/entities/watch-history.entity';
 import { UsersService } from '../../../../../src/modules/users/services/users.service';
 import {
-  InvalidArchiveIdentifierException,
+  InvalidMovieIdentifierException,
   LicenseNotAllowedException,
   WatchHistoryNotFoundException,
 } from '../../../../../src/modules/streaming/exceptions/streaming.exceptions';
@@ -63,7 +63,7 @@ describe('WatchHistoryService', () => {
         WatchHistoryService,
         { provide: getModelToken(WatchHistory.name), useValue: historyModel },
         { provide: UsersService, useValue: usersService },
-        { provide: FreeMoviesService, useValue: freeMoviesService },
+        { provide: FreeCatalogService, useValue: freeMoviesService },
       ],
     }).compile();
 
@@ -192,7 +192,7 @@ describe('WatchHistoryService', () => {
 
     it('rejects malformed identifiers', async () => {
       await expect(service.getEntry(userId, 'bad id')).rejects.toThrow(
-        InvalidArchiveIdentifierException,
+        InvalidMovieIdentifierException,
       );
     });
   });

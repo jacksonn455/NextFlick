@@ -11,7 +11,7 @@ import styles from '../styles/navbar.module.css';
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/search', label: 'Search' },
-  { href: '/free', label: 'Free to Watch' },
+  { href: '/watch', label: 'Free to Watch' },
   { href: '/favorites', label: 'My List' },
 ];
 

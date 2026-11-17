@@ -42,3 +42,27 @@ export class WatchHistoryNotFoundException extends NotFoundException {
     super(message, 'WATCH_HISTORY_NOT_FOUND');
   }
 }
+
+export class InvalidMovieIdentifierException extends BadRequestException {
+  constructor(message: string = 'Invalid movie identifier') {
+    super(message, 'INVALID_MOVIE_IDENTIFIER');
+  }
+}
+
+// A content source (YouTube, PeerTube, Library of Congress) failed or timed out.
+// retryAfterMs tells the catalog how long to skip the source (e.g. quota exhausted).
+export class ProviderUnavailableException extends ServiceUnavailableException {
+  constructor(
+    readonly source: string,
+    message: string = `${source} is unavailable`,
+    readonly retryAfterMs?: number,
+  ) {
+    super(message, 'PROVIDER_UNAVAILABLE');
+  }
+}
+
+export class CatalogUnavailableException extends ServiceUnavailableException {
+  constructor(message: string = 'Free movie sources are unavailable') {
+    super(message, 'CATALOG_UNAVAILABLE');
+  }
+}

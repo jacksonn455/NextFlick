@@ -11,9 +11,14 @@ import {
   ArchiveMetadataResponse,
   ArchiveSearchDoc,
   ArchiveSearchResponse,
+} from '../interfaces/archive.interface';
+import {
   FreeMovie,
   FreeMovieDetails,
-} from '../interfaces/archive.interface';
+  FreeMovieProvider,
+  ProviderSearchOptions,
+} from '../interfaces/free-movie.interface';
+import { classifyContentType, mapGenres } from '../utils/catalog.utils';
 import {
   ArchiveMovie,
   ArchiveMovieDocument,
@@ -53,10 +58,25 @@ const SEARCH_FIELDS = [
   'description',
   'creator',
   'licenseurl',
+  'subject',
+  'runtime',
+  'publicdate',
 ];
 
+// archive.org "runtime" is free text: "01:23:45", "83 min", "1h 23m"
+function parseRuntime(runtime: string | undefined): number | null {
+  if (!runtime) return null;
+  const minutes = runtime.match(/^\s*(\d+)\s*min/i);
+  if (minutes) return Number(minutes[1]) * 60 || null;
+  const hm = runtime.match(/^\s*(\d+)\s*h(?:ours?)?\s*(\d+)?/i);
+  if (hm) return Number(hm[1]) * 3600 + Number(hm[2] ?? 0) * 60 || null;
+  return parseDuration(runtime.trim());
+}
+
+// Internet Archive source of the free catalog
 @Injectable()
-export class FreeMoviesService {
+export class FreeMoviesService implements FreeMovieProvider {
+  readonly source = 'archive' as const;
   private readonly logger = new Logger(FreeMoviesService.name);
 
   constructor(
@@ -68,24 +88,29 @@ export class FreeMoviesService {
     private readonly archiveMovieModel: Model<ArchiveMovieDocument>,
   ) {}
 
+  // Works without any configuration
+  isEnabled(): boolean {
+    return true;
+  }
+
   // Public domain films from the curated collection that have an MP4 file
-  async search(
-    options: { query?: string; limit?: number } = {},
-  ): Promise<FreeMovie[]> {
+  async search(options: ProviderSearchOptions = {}): Promise<FreeMovie[]> {
     const term = escapeSearchTerm(options.query ?? '');
+    const genre = escapeSearchTerm(options.genre ?? '');
     const limit = Math.min(
       Math.max(options.limit ?? DEFAULT_FREE_MOVIES_LIMIT, 1),
       MAX_FREE_MOVIES_LIMIT,
     );
-    const cacheKey = `archive:search:${term.toLowerCase()}:${limit}`;
+    const page = Math.max(Math.floor(options.page ?? 1), 1);
+    const cacheKey = `archive:search:${term.toLowerCase()}:${limit}${genre ? `:g:${genre.toLowerCase()}` : ''}${page > 1 ? `:p${page}` : ''}`;
 
     const cached = await this.cacheManager.get<FreeMovie[]>(cacheKey);
     if (cached) return cached;
 
     const params = new URLSearchParams({
-      q: this.buildSearchQuery(term),
+      q: this.buildSearchQuery(term, genre),
       rows: String(limit),
-      page: '1',
+      page: String(page),
       output: 'json',
     });
     SEARCH_FIELDS.forEach((field) => params.append('fl[]', field));
@@ -142,8 +167,11 @@ export class FreeMoviesService {
       );
     }
 
-    const movie = this.toFreeMovie({ ...data.metadata, identifier });
     const video = pickVideoFile(data.files);
+    const movie = this.toFreeMovie(
+      { ...data.metadata, identifier },
+      parseDuration(video?.length),
+    );
     if (!video) {
       throw new VideoUnavailableException(
         `No playable video file for ${identifier}`,
@@ -155,7 +183,7 @@ export class FreeMoviesService {
       ...movie,
       videoUrl: buildDownloadUrl(this.config.baseUrl, identifier, video.name),
       videoFormat: video.format ?? 'MP4',
-      durationSeconds: parseDuration(video.length),
+      embedUrl: null,
       sourceUrl,
       attribution: buildAttribution(
         movie.title,
@@ -178,7 +206,7 @@ export class FreeMoviesService {
     return details;
   }
 
-  private buildSearchQuery(term: string): string {
+  private buildSearchQuery(term: string, genre = ''): string {
     const parts = [
       `collection:(${this.config.collection})`,
       'mediatype:(movies)',
@@ -186,18 +214,33 @@ export class FreeMoviesService {
       'format:("h.264" OR "MPEG4" OR "512Kb MPEG4")',
     ];
     if (term) parts.push(`title:(${term})`);
+    if (genre) parts.push(`subject:(${genre})`);
     return parts.join(' AND ');
   }
 
-  private toFreeMovie(doc: ArchiveSearchDoc): FreeMovie {
+  private toFreeMovie(
+    doc: ArchiveSearchDoc,
+    durationSeconds: number | null = parseRuntime(doc.runtime),
+  ): FreeMovie {
+    const license = classifyLicense(doc.licenseurl);
+    const subjects = Array.isArray(doc.subject) ? doc.subject : [doc.subject];
     return {
       identifier: doc.identifier,
+      source: this.source,
+      externalId: doc.identifier,
       title: toText(doc.title) ?? doc.identifier,
       year: parseYear(doc.year, doc.date),
       description: toPlainText(doc.description),
       creator: toText(doc.creator),
       thumbnail: buildThumbnailUrl(this.config.baseUrl, doc.identifier),
-      license: classifyLicense(doc.licenseurl),
+      durationSeconds,
+      publishedAt: doc.publicdate ?? null,
+      genres: mapGenres(subjects),
+      // The collection only holds full-length films
+      contentType: classifyContentType(durationSeconds, 'feature'),
+      license,
+      licenseVerified: license.type !== null,
+      freeToWatch: license.allowed,
     };
   }
 
@@ -262,17 +305,26 @@ export class FreeMoviesService {
         .exec();
       if (!record) return null;
 
+      const license = classifyLicense(record.licenseUrl);
       return {
         identifier: record.identifier,
+        source: this.source,
+        externalId: record.identifier,
         title: record.title,
         year: record.year,
         description: record.description,
         creator: record.creator,
         thumbnail: record.thumbnail,
-        license: classifyLicense(record.licenseUrl),
+        durationSeconds: record.durationSeconds,
+        publishedAt: null,
+        genres: [],
+        contentType: classifyContentType(record.durationSeconds, 'feature'),
+        license,
+        licenseVerified: license.type !== null,
+        freeToWatch: license.allowed,
         videoUrl: record.videoUrl,
         videoFormat: record.videoFormat,
-        durationSeconds: record.durationSeconds,
+        embedUrl: null,
         sourceUrl: record.sourceUrl,
         attribution: record.attribution,
         rights: record.rights,

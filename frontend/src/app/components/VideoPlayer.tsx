@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSaveProgress } from '../hooks/useWatchHistory';
-import { FreeMovieDetails } from '../types/freeMovie';
+import { FreeMovieDetails, SOURCE_LABELS } from '../types/freeMovie';
 import buttons from '../styles/buttons.module.css';
 import styles from '../styles/free.module.css';
 
@@ -73,8 +73,8 @@ export default function VideoPlayer({ movie, startAt = 0 }: VideoPlayerProps) {
       {failed ? (
         <div className={styles.playerError} role="alert" data-testid="player-error">
           <p>
-            <strong>This video couldn&apos;t be played.</strong> The file may be temporarily unavailable on the
-            Internet Archive.
+            <strong>This video couldn&apos;t be played.</strong> The file may be temporarily unavailable on the{' '}
+            {SOURCE_LABELS[movie.source] ?? 'source'} website.
           </p>
           <div className={styles.actions}>
             <button type="button" className={`${buttons.btn} ${buttons.primary}`} onClick={retry}>
@@ -86,7 +86,7 @@ export default function VideoPlayer({ movie, startAt = 0 }: VideoPlayerProps) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Open on archive.org
+              Open on {SOURCE_LABELS[movie.source] ?? 'the source website'}
             </a>
           </div>
         </div>
@@ -95,7 +95,7 @@ export default function VideoPlayer({ movie, startAt = 0 }: VideoPlayerProps) {
           key={attempt}
           ref={videoRef}
           data-testid="video-player"
-          src={movie.videoUrl}
+          src={movie.videoUrl ?? undefined}
           poster={movie.thumbnail}
           controls
           autoPlay

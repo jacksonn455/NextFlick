@@ -9,7 +9,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'https://nextflick-three.vercel.app',
+    // BASE_URL runs the suite against another deployment, e.g. a local build
+    baseURL: process.env.BASE_URL || 'https://nextflick-three.vercel.app',
     trace: 'on-first-retry',
   },
   projects: [

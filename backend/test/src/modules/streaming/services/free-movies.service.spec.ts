@@ -114,12 +114,20 @@ describe('FreeMoviesService', () => {
           description: null,
           creator: 'F. W. Murnau',
           thumbnail: `${BASE_URL}/services/img/nosferatu`,
+          source: 'archive',
+          externalId: 'nosferatu',
+          durationSeconds: null,
+          publishedAt: null,
+          genres: [],
+          contentType: 'feature',
           license: {
             type: 'public-domain',
             label: 'Public Domain',
             url: PUBLIC_DOMAIN,
             allowed: true,
           },
+          licenseVerified: true,
+          freeToWatch: true,
         },
       ]);
     });

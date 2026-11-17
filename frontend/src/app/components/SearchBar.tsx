@@ -10,6 +10,8 @@ interface SearchBarProps {
   onSubmit: () => void;
   label?: string;
   placeholder?: string;
+  autoFocus?: boolean;
+  className?: string;
 }
 
 export default function SearchBar({
@@ -18,6 +20,8 @@ export default function SearchBar({
   onSubmit,
   label = 'Search movies',
   placeholder = 'Titles, franchises, characters…',
+  autoFocus = true,
+  className = '',
 }: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,7 +29,7 @@ export default function SearchBar({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={styles.searchBar} role="search">
+    <form onSubmit={handleSubmit} className={`${styles.searchBar} ${className}`} role="search">
       <SearchIcon size={22} className={styles.searchIcon} />
       <input
         type="search"
@@ -35,7 +39,7 @@ export default function SearchBar({
         className={styles.searchInput}
         aria-label={label}
         autoComplete="off"
-        autoFocus
+        autoFocus={autoFocus}
       />
       {value && (
         <button

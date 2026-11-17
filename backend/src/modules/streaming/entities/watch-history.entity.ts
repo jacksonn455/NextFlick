@@ -10,7 +10,7 @@ export class WatchHistory {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: User.name, required: true })
   userId: Types.ObjectId;
 
-  // Internet Archive identifier of the film
+  // Film id in the free catalog (bare Internet Archive id or "source:id")
   @Prop({ required: true })
   identifier: string;
 

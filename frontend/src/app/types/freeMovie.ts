@@ -1,30 +1,85 @@
 // frontend/app/types/freeMovie.ts
-// Public domain films streamed from the Internet Archive
+// Free films from the Internet Archive, the Library of Congress, PeerTube and YouTube
+
+export type MovieSource = 'archive' | 'youtube' | 'peertube' | 'loc';
+export type ContentType = 'feature' | 'short' | 'unknown';
+
+export const SOURCE_LABELS: Record<MovieSource, string> = {
+  archive: 'Internet Archive',
+  loc: 'Library of Congress',
+  peertube: 'PeerTube',
+  youtube: 'YouTube',
+};
+
+// Short labels for card badges
+export const SOURCE_SHORT_LABELS: Record<MovieSource, string> = {
+  archive: 'Archive',
+  loc: 'LoC',
+  peertube: 'PeerTube',
+  youtube: 'YouTube',
+};
 
 export interface LicenseInfo {
-  type: 'public-domain' | 'cc0' | 'cc-by' | 'cc-by-sa' | null;
+  type: string | null;
   label: string;
   url: string | null;
+  // The license lets anyone show and share the film
   allowed: boolean;
 }
 
 export interface FreeMovie {
+  // Internet Archive ids are bare; other sources are prefixed ("youtube:<id>")
   identifier: string;
+  source: MovieSource;
+  externalId: string;
   title: string;
   year: string | null;
   description: string | null;
   creator: string | null;
   thumbnail: string;
+  durationSeconds: number | null;
+  publishedAt: string | null;
+  genres: string[];
+  contentType: ContentType;
   license: LicenseInfo;
+  licenseVerified: boolean;
+  // Explicitly offered for free viewing (false: only publicly accessible)
+  freeToWatch: boolean;
+  alsoAvailableOn?: { source: MovieSource; identifier: string }[];
 }
 
 export interface FreeMovieDetails extends FreeMovie {
-  videoUrl: string;
-  videoFormat: string;
-  durationSeconds: number | null;
+  // Direct file for the <video> player (Internet Archive, Library of Congress)
+  videoUrl: string | null;
+  videoFormat: string | null;
+  // Official embedded player (YouTube, PeerTube)
+  embedUrl: string | null;
   sourceUrl: string;
   attribution: string;
   rights: string | null;
+}
+
+export interface FreeSourceStatus {
+  source: MovieSource;
+  label: string;
+  enabled: boolean;
+  available: boolean;
+}
+
+export interface FreeCatalogFilters {
+  query?: string;
+  source?: MovieSource;
+  genre?: string;
+  yearFrom?: number;
+  yearTo?: number;
+  contentType?: ContentType;
+  // Default true
+  freeOnly?: boolean;
+}
+
+export interface FreeCatalogPage {
+  movies: FreeMovie[];
+  unavailableSources: MovieSource[];
 }
 
 export interface WatchHistoryEntry {
@@ -56,5 +111,6 @@ export const formatTimestamp = (seconds: number): string => {
   return h ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
 };
 
+// ":" is kept readable in the path: /watch/youtube:abc
 export const watchUrl = (identifier: string, play = false) =>
-  `/watch/${encodeURIComponent(identifier)}${play ? '?play=1' : ''}`;
+  `/watch/${encodeURIComponent(identifier).replace(/%3A/gi, ':')}${play ? '?play=1' : ''}`;
